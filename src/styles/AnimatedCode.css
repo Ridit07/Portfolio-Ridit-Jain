@@ -1,0 +1,38 @@
+
+.animated-code-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1.5rem;
+  }
+  
+  .animated-code {
+    background-color: #1a1a1a;
+    color: var(--primary-color);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .animated-code code {
+    display: inline-block;
+  }
+  
+  .cursor {
+    display: inline-block;
+    width: 0.6ch;
+  }
+  
+  .cursor {
+    animation: blink 1s steps(2, start) infinite;
+  }
+  
+  @keyframes blink {
+    to {
+      visibility: hidden;
+    }
+  }
+  

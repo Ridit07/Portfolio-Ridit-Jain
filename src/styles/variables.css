@@ -1,0 +1,11 @@
+:root {
+    --primary-color: #00e6e6;
+    --accent-color: #ff4d4d;
+    --dark-bg: #0d0d0d;
+    --light-text: #e0e0e0;
+    --mute-text: #a0a0a0;
+    --section-padding: 4rem 1rem;
+    --border-radius: 6px;
+    --font-mono: 'Courier New', Courier, monospace;
+  }
+  

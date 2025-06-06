@@ -1,0 +1,153 @@
+   .experience-section {
+    padding: 4rem 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  
+  .exp-card {
+    border: 1px solid var(--accent-color);
+    border-radius: var(--border-radius);
+    background-color: #1a1a1a;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+  
+  .exp-card.open {
+    border-color: var(--primary-color);
+  }
+  
+  .exp-header {
+    cursor: pointer;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+  }
+  
+  .exp-header:hover {
+    background-color: #222222;
+  }
+  
+  .exp-company h3 {
+    margin: 0;
+    font-family: var(--font-mono);
+    color: var(--primary-color);
+    font-size: 1.25rem;
+  }
+  
+  .exp-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    font-size: 0.9rem;
+    color: var(--mute-text);
+  }
+  
+  .exp-role,
+  .exp-timeline,
+  .exp-location {
+    display: inline-block;
+  }
+  
+  .exp-techstack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .tech-pill {
+    background-color: var(--dark-bg);
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+    color: var(--light-text);
+  }
+  
+  .exp-summary p {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--light-text);
+  }
+  
+  .exp-toggle-button {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+  }
+  
+  .exp-toggle-button button {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .exp-toggle-button button:hover {
+    color: var(--accent-color);
+  }
+  
+  .exp-details {
+    padding: 0 1.5rem 1rem 1.5rem;
+    border-top: 1px solid var(--accent-color);
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  .exp-detail-section {
+    margin-top: 1rem;
+  }
+  
+  .exp-detail-section h4 {
+    margin: 0 0 0.5rem 0;
+    font-family: var(--font-mono);
+    color: var(--accent-color);
+    font-size: 1.05rem;
+  }
+  
+  .exp-detail-section ul {
+    list-style: disc inside;
+    margin-left: 1rem;
+  }
+  
+  .exp-detail-section ul li {
+    margin-bottom: 0.5rem;
+    color: var(--light-text);
+  }
+  
+  @media (max-width: 600px) {
+    .exp-header {
+      padding: 0.75rem 1rem;
+    }
+    .exp-toggle-button {
+      top: 0.75rem;
+      right: 1rem;
+    }
+    .exp-company h3 {
+      font-size: 1.1rem;
+    }
+    .exp-summary p {
+      font-size: 0.95rem;
+    }
+  }
+  

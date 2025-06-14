@@ -3,7 +3,7 @@ import '../styles/Hero.css';
 
 import AnimatedCode from './AnimatedCode';
 
-const cvUrl = 'https://drive.google.com/uc?export=download&id=1zBuLxkKP2Oh14NTngWEV9zjqeanzlsw_';
+const cvUrl = 'https://drive.google.com/uc?export=download&id=1Gk4h6XuuEaoMzMqZk0MSNNxH8L6njy6c';
 
 
 export default function Hero() {

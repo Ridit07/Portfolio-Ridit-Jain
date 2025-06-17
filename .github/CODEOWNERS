@@ -1,0 +1,8 @@
+# ───────────────────────────────────────────────────────────
+# CODEOWNERS
+# ───────────────────────────────────────────────────────────
+# See https://docs.github.com/en/repositories/managing-your-repo
+#      configuring-branches-and-merges/about-code-owners
+
+# 1) Default owner for everything in the repo
+*       @Ridit07 @riditj07

@@ -4,6 +4,7 @@ import headshot from '../assets/RiditPhoto.jpeg';
 
 export default function About() {
   return (
+    //testing
     <section id="about" className="about section">
       <h2 className="section-title">About Me</h2>
       <div className="about-container">

@@ -10,6 +10,8 @@ import Education from './components/Education';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import 'react-toastify/dist/ReactToastify.css';
+
+
 function App() {
   useEffect(() => {
     const sections = document.querySelectorAll('section');

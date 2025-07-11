@@ -51,7 +51,12 @@ function App() {
     <>
       <Navbar />
       <Hero />
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={
+        <div className="suspense-fallback">
+          <span className="loader"></span> Getting things ready...
+        </div>
+      }
+      >
         <About />
         <Experience />
         <Projects />

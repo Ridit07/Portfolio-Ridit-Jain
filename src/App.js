@@ -3,13 +3,23 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import About from './components/About';
-import Experience from './components/Experience';
-import Projects from './components/Projects';
-import Education from './components/Education';
-import Contact from './components/Contact';
-import Footer from './components/Footer';
+// import About from './components/About';
+// import Experience from './components/Experience';
+// import Projects from './components/Projects';
+// import Education from './components/Education';
+// import Contact from './components/Contact';
+// import Footer from './components/Footer';
 import 'react-toastify/dist/ReactToastify.css';
+
+
+import { lazy, Suspense } from 'react';
+
+const About = lazy(() => import('./components/About'));
+const Experience = lazy(() => import('./components/Experience'));
+const Projects = lazy(() => import('./components/Projects'));
+const Education = lazy(() => import('./components/Education'));
+const Contact = lazy(() => import('./components/Contact'));
+const Footer = lazy(() => import('./components/Footer'));
 
 
 function App() {
@@ -41,12 +51,14 @@ function App() {
     <>
       <Navbar />
       <Hero />
-      <About />
-      <Experience />
-      <Projects />
-      <Education />
-      <Contact />
-      <Footer />
+      <Suspense fallback={<div>Loading...</div>}>
+        <About />
+        <Experience />
+        <Projects />
+        <Education />
+        <Contact />
+        <Footer />
+      </Suspense>
       <Analytics />
       <SpeedInsights />
     </>

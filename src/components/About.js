@@ -20,7 +20,8 @@ export default function About() {
           <p>Always excited by big problems, fast teams, and clean code.</p>
         </div>
         <div className="about-image">
-          <img src={headshot} alt="Ridit Jain" />
+          {/* <img src={headshot} alt="Ridit Jain" /> */}
+          <img src= {headshot} alt="Ridit Jain" loading="lazy" />
         </div>
       </div>
     </section>

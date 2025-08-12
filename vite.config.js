@@ -10,7 +10,7 @@ export default defineConfig({
     open: false
   },
   build: {
-    outDir: 'dist',
+    outDir: 'build',
     sourcemap: false, // Disable sourcemaps for prod
     chunkSizeWarningLimit: 1000
   }

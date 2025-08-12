@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme */
+:root { --acc:#f5c84b; }
+
+/* Full-bleed, subtle glow */
+html, body { height: 100%; }
+body {
+  background: radial-gradient(60rem 30rem at 70% -10%, #1b2030 0%, transparent 60%),
+              radial-gradient(50rem 25rem at -10% 20%, #1a1f2a 0%, transparent 60%),
+              #0f1115;
+}
+
+/* Smooth scroll + focus */
+html { scroll-behavior: smooth; }
+:focus-visible { outline: 2px dashed var(--acc); outline-offset: 2px; }
+
+/* Perf */
+img { content-visibility: auto; }
+
+/* Hide scrollbars for cosmetic scrollers (tabs/sidebar) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media print {
+  body { background: #fff !important; }
+  .bg-\[\#0f1115\] { background: #fff !important; }
+  .text-zinc-100, .text-white { color: #111 !important; }
+  .border-white\/10 { border-color: #e5e7eb !important; }
+}

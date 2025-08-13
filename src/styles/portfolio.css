@@ -1,0 +1,68 @@
+
+.markdown h1 { font-size: 1.5rem; margin: .5rem 0 .25rem; font-weight: 700; }
+.markdown h2 { font-size: 1.25rem; margin: 1rem 0 .25rem; font-weight: 600; }
+.markdown h3 { font-size: 1.1rem; margin: .75rem 0 .25rem; font-weight: 600; }
+.markdown p  { margin: .5rem 0; color: #d1d5db; }
+
+.markdown code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: #11151b;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .375rem;
+  padding: .15rem .35rem;
+}
+
+.markdown pre {
+  background: #0b0e13;
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 1rem;
+  border-radius: .75rem;
+  overflow: auto;
+}
+
+.markdown ul { list-style: disc;    padding-left: 1.25rem; margin: .25rem 0 .5rem; }
+.markdown ol { list-style: decimal; padding-left: 1.25rem; margin: .25rem 0 .5rem; }
+
+.markdown hr  { border: none; height: 1px; background: rgba(255,255,255,.08); margin: 1rem 0; }
+.markdown img { max-width: 100%; border-radius: .75rem; border: 1px solid rgba(255,255,255,.08); margin: .5rem 0; }
+
+
+.btn {
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.08);
+  color: #f5f5f5;
+  padding: .5rem .75rem;
+  border-radius: .75rem;
+  transition: transform .12s ease, background .12s ease, color .12s ease, box-shadow .12s ease;
+}
+.btn:hover,
+.btn:focus-visible {
+  background: rgba(255,255,255,.16);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-acc {
+  background: var(--acc);
+  color: #0f1115;
+  border: none;
+  padding: .5rem .75rem;
+  border-radius: .75rem;
+  box-shadow: 0 2px 8px rgba(245,200,75,.25);
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+}
+.btn-acc:hover,
+.btn-acc:focus-visible {
+  filter: brightness(1.05);
+  box-shadow: 0 4px 12px rgba(245,200,75,.35);
+}
+.btn-acc:active {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .btn-acc { transition: none; }
+}

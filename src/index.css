@@ -2,10 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme */
 :root { --acc:#f5c84b; }
 
-/* Full-bleed, subtle glow */
 html, body { height: 100%; }
 body {
   background: radial-gradient(60rem 30rem at 70% -10%, #1b2030 0%, transparent 60%),
@@ -13,14 +11,11 @@ body {
               #0f1115;
 }
 
-/* Smooth scroll + focus */
 html { scroll-behavior: smooth; }
 :focus-visible { outline: 2px dashed var(--acc); outline-offset: 2px; }
 
-/* Perf */
 img { content-visibility: auto; }
 
-/* Hide scrollbars for cosmetic scrollers (tabs/sidebar) */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 

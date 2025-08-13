@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { SectionTitle } from "../components/ui.jsx";
 import { ACCENT } from "../App.jsx";
 
-// ---------- DATA (edit here) ----------
 const EXPERIENCE = [
   {
     logo: "Z",
@@ -80,9 +79,7 @@ const SKILLS = [
   { name: "C++",       evidence: ["Uni projects, CP"],                     endorsements: 4, level: "beginner" },
 ];
 
-// ---------- COMPONENT ----------
 export default function Resume() {
-  // add filter state
   const [skillFilter, setSkillFilter] = useState("All");
   const filteredSkills = SKILLS.filter(s =>
     skillFilter === "All" ? true : s.level === skillFilter.toLowerCase()
@@ -92,7 +89,6 @@ export default function Resume() {
     <section>
       <SectionTitle title="Resume" />
 
-      {/* EXPERIENCE */}
       <Card title="Experience">
         {EXPERIENCE.map((item, i) => (
           <div key={i}>
@@ -102,7 +98,6 @@ export default function Resume() {
         ))}
       </Card>
 
-      {/* EDUCATION */}
       <Card title="Education">
         {EDUCATION.map((ed, i) => (
           <div key={i}>
@@ -112,7 +107,6 @@ export default function Resume() {
         ))}
       </Card>
 
-      {/* SKILLS */}
       <Card
         title="Skills"
         right={<FilterPills active={skillFilter} onChange={setSkillFilter} />}
@@ -130,7 +124,6 @@ export default function Resume() {
   );
 }
 
-// ---------- Building blocks ----------
 function Card({ title, right, children }) {
   return (
     <section className="mt-6 rounded-2xl bg-[#0f1115] border border-white/10">
@@ -248,7 +241,6 @@ function SkillItem({ name, evidence = [], endorsements = 0, level = "intermediat
   );
 }
 
-// Unique 3-segment capsule meter
 function ProficiencyCapsule({ level }) {
   const fill = { beginner: 1, intermediate: 2, proficient: 3 }[level] ?? 2;
   const label = { beginner: "Beginner", intermediate: "Intermediate", proficient: "Proficient" }[level] ?? "Intermediate";
@@ -291,7 +283,6 @@ function LegendDot({ n, label }) {
   );
 }
 
-// ---------- tiny helpers ----------
 function Expandable({ children }) {
   const [open, setOpen] = useState(false);
   return (
@@ -315,7 +306,6 @@ function InlineSkills({ display, list = [] }) {
   const btnRef = useRef(null);
   const popRef = useRef(null);
 
-  // close on outside click or Esc
   useEffect(() => {
     if (!open) return;
 
@@ -391,7 +381,6 @@ function InlineSkills({ display, list = [] }) {
 
 
 
-// ---------- icons (minimal, inline) ----------
 function PlusIcon() { return (<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5v14M5 12h14"/></svg>); }
 function PencilIcon() { return (<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 21l3.6-.6L20 7l-3-3L3.6 17.4z"/><path d="M14 6l3 3"/></svg>); }
 function BadgeIcon() { return (<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 5 6 .9-4.3 4.2 1 6-5.7-3-5.7 3 1-6L3 7.9 9 7z"/></svg>); }

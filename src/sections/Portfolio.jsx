@@ -35,6 +35,18 @@ async function fetchCatalog(username) {
   return res.json(); // { repos, pinned }
 }
 
+async function fetchCatalogStatic() {
+  const res = await fetch("/github-catalog.json", { cache: "force-cache" });
+  if (!res.ok) throw new Error(`Static catalog ${res.status} ${res.statusText}`);
+  return res.json(); // { user, fetched_at, repos, pinned }
+}
+async function fetchCatalogAPI(username, { refresh = false } = {}) {
+  const url = `/api/github/catalog?user=${encodeURIComponent(username)}${refresh ? "&refresh=1" : ""}`;
+  const res = await fetch(url, { cache: "no-cache" });
+  if (!res.ok) throw new Error(`API catalog ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
 async function fetchReadmeServer(owner, repo, signal) {
   const res = await fetch(
     `/api/github/readme?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`,
@@ -86,39 +98,36 @@ export default function Portfolio() {
 
   useEffect(() => {
     let alive = true;
-
-    // 1) Try cache first for instant UI
-    const cached = loadCatalogCache(GITHUB_USER);
-    if (cached) {
-      const prepared = prepareItems(cached.repos);
-      const ordered = orderPinned(prepared, cached.pinned);
-      setItems(ordered);
-      setLoading(false);
-    }
-
-    // 2) Always refresh in background
+  
     (async () => {
-      setErr("");
-      if (!cached) setLoading(true);
       try {
-        const data = await fetchCatalog(GITHUB_USER); // { repos, pinned }
+        // 1) Try static JSON (instant, zero cold start)
+        const staticData = await fetchCatalogStatic().catch(() => null);
+        if (staticData && alive) {
+          const prepared = prepareItems(staticData.repos);
+          const ordered = orderPinned(prepared, staticData.pinned);
+          setItems(ordered);
+          setLoading(false);
+        }
+  
+        // 2) Always refresh from API (hot cache via cron; memo inside function)
+        setErr("");
+        const apiData = await fetchCatalogAPI(GITHUB_USER);
         if (!alive) return;
-        saveCatalogCache(GITHUB_USER, data);
-
-        const prepared = prepareItems(data.repos);
-        const ordered = orderPinned(prepared, data.pinned);
+        const prepared = prepareItems(apiData.repos);
+        const ordered = orderPinned(prepared, apiData.pinned);
         setItems(ordered);
+        setLoading(false);
       } catch (e) {
         if (!alive) return;
         setErr(e.message || "Failed to load GitHub projects.");
-      } finally {
-        if (!alive) return;
         setLoading(false);
       }
     })();
-
+  
     return () => { alive = false; };
   }, []);
+  
 
   const filters = useMemo(() => {
     const cats = new Set(items.map(i => i.cat));

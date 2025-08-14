@@ -1,0 +1,363 @@
+{
+  "user": "Ridit07",
+  "fetched_at": "2025-08-14T10:39:43.119Z",
+  "repos": [
+    {
+      "id": "R_kgDOMVkHyg",
+      "name": "Medical-Chatbot-LLM",
+      "full_name": "Ridit07/Medical-Chatbot-LLM",
+      "html_url": "https://github.com/Ridit07/Medical-Chatbot-LLM",
+      "homepage": "",
+      "description": "AI-powered medical chatbot that analyzes text and medical images (like skin lesions or chest X-rays) to detect possible health conditions, provide explanations with reasoning, and deliver conversational, human-like responses for educational and research purposes.",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "llm",
+        "medical-chatbot",
+        "pytorch",
+        "healthcare-ai-image-classification"
+      ]
+    },
+    {
+      "id": "R_kgDOPav0Cw",
+      "name": "Ridit07",
+      "full_name": "Ridit07/Ridit07",
+      "html_url": "https://github.com/Ridit07/Ridit07",
+      "homepage": "",
+      "description": "",
+      "language": "",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": []
+    },
+    {
+      "id": "R_kgDOO3VOwQ",
+      "name": "Portfolio-Ridit-Jain",
+      "full_name": "Ridit07/Portfolio-Ridit-Jain",
+      "html_url": "https://github.com/Ridit07/Portfolio-Ridit-Jain",
+      "homepage": "https://portfolio-ridit-jain.vercel.app",
+      "description": "Portfolio website for Ridit Jain",
+      "language": "JavaScript",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "portfolio-website",
+        "reactjs"
+      ]
+    },
+    {
+      "id": "R_kgDOPaqXYw",
+      "name": "Cryptography-in-QMT",
+      "full_name": "Ridit07/Cryptography-in-QMT",
+      "html_url": "https://github.com/Ridit07/Cryptography-in-QMT",
+      "homepage": "",
+      "description": "Quantum cryptography demo implementing BB84, BBM92, and TF-QKD protocols for secure key exchange, combined with AES/RSA for text and image encryption. Includes a React chatbot frontend and a Flask/Firebase backend powered by Qiskit simulations.",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "bb84",
+        "bbm92",
+        "flask",
+        "qiskit",
+        "qkd",
+        "quantum-cryptography"
+      ]
+    },
+    {
+      "id": "R_kgDOPaoRMQ",
+      "name": "Combining-ML-and-DL-Approaches-to-Enhance-Antimicrobial-Peptide-Discovery-and-Effectiveness",
+      "full_name": "Ridit07/Combining-ML-and-DL-Approaches-to-Enhance-Antimicrobial-Peptide-Discovery-and-Effectiveness",
+      "html_url": "https://github.com/Ridit07/Combining-ML-and-DL-Approaches-to-Enhance-Antimicrobial-Peptide-Discovery-and-Effectiveness",
+      "homepage": "",
+      "description": "Hybrid ML + DL approach for antimicrobial peptide discovery, combining sequence-based models with structural image analysis and explainable AI (SHAP, LIME) to identify key properties driving predictions.",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "cnn",
+        "deep-learning",
+        "explainable-ai",
+        "lime",
+        "machine-learning",
+        "random-forest",
+        "shap"
+      ]
+    },
+    {
+      "id": "R_kgDOJeguXw",
+      "name": "IPL-Prediction-App",
+      "full_name": "Ridit07/IPL-Prediction-App",
+      "html_url": "https://github.com/Ridit07/IPL-Prediction-App",
+      "homepage": "",
+      "description": "IPLitics is a student-built Flutter + Flask application that brings together live IPL match data, player and team statistics, and basic machine learning–based predictions. Designed for cricket fans, it offers a clean UI, quick insights, and a simple analytics pipeline for batting and bowling performance.",
+      "language": "Dart",
+      "stargazers_count": 1,
+      "owner": "Ridit07",
+      "topics": [
+        "flask",
+        "flutter",
+        "machine-learning",
+        "python"
+      ]
+    },
+    {
+      "id": "R_kgDOKv6Z-g",
+      "name": "Lane-Detection-Using-Deep-Learning",
+      "full_name": "Ridit07/Lane-Detection-Using-Deep-Learning",
+      "html_url": "https://github.com/Ridit07/Lane-Detection-Using-Deep-Learning",
+      "homepage": "",
+      "description": "A deep learning-based lane detection system using CNNs for robust, real-time identification of road lane markings, aimed at enhancing Advanced Driver Assistance Systems (ADAS) with high accuracy and reliability.",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "cnn",
+        "deep-learning",
+        "lane-detection",
+        "opencv",
+        "tensorflow"
+      ]
+    },
+    {
+      "id": "R_kgDOK1Ht9w",
+      "name": "Image-based-Emotion-Age-Gender-Recognition-And-Song-Recommendation-System",
+      "full_name": "Ridit07/Image-based-Emotion-Age-Gender-Recognition-And-Song-Recommendation-System",
+      "html_url": "https://github.com/Ridit07/Image-based-Emotion-Age-Gender-Recognition-And-Song-Recommendation-System",
+      "homepage": "",
+      "description": "An AI-powered facial analysis system that detects a user’s emotion, age, and gender from a webcam feed, then recommends a personalized music playlist. Built using computer vision and machine learning, it combines emotion recognition, demographic prediction, and context-aware music recommendation for an engaging, real-time experience.",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "age-prediction",
+        "computer-vision",
+        "emotion-detection",
+        "gender-prediction",
+        "music-recommendation",
+        "opencv",
+        "python"
+      ]
+    },
+    {
+      "id": "R_kgDOMV5k1g",
+      "name": "Research-ChatGPT-can-change-the-world",
+      "full_name": "Ridit07/Research-ChatGPT-can-change-the-world",
+      "html_url": "https://github.com/Ridit07/Research-ChatGPT-can-change-the-world",
+      "homepage": "",
+      "description": "Research study on the transformative potential of ChatGPT and generative AI, exploring applications, economic impact, and ethical considerations across industries.",
+      "language": "",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "ai",
+        "chatgpt"
+      ]
+    },
+    {
+      "id": "R_kgDOMV5zhg",
+      "name": "Universal-Turing-Machine-Simulator",
+      "full_name": "Ridit07/Universal-Turing-Machine-Simulator",
+      "html_url": "https://github.com/Ridit07/Universal-Turing-Machine-Simulator",
+      "homepage": "",
+      "description": "This project simulates a Universal Turing Machine (UTM) that can take another Turing Machine (TM) and an input string w, and mimic the behavior of the TM. The UTM will accept or reject the string w based on the behavior of the TM.",
+      "language": "Python",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "python",
+        "turing-machine-simulator"
+      ]
+    },
+    {
+      "id": "R_kgDOMWtZWA",
+      "name": "HCL-Internship-Demo-Recruitment-Invoice-Tool",
+      "full_name": "Ridit07/HCL-Internship-Demo-Recruitment-Invoice-Tool",
+      "html_url": "https://github.com/Ridit07/HCL-Internship-Demo-Recruitment-Invoice-Tool",
+      "homepage": "",
+      "description": "AI-assisted recruitment and invoicing tool built during HCL internship, streamlining vendor claims, verification, rate-card generation, and invoice preparation with role-based workflows.",
+      "language": "Dart",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "flask",
+        "flutter",
+        "mysql",
+        "python"
+      ]
+    },
+    {
+      "id": "R_kgDOMWub6Q",
+      "name": "Selective-Mutism-Hand-Gesture-To-Text",
+      "full_name": "Ridit07/Selective-Mutism-Hand-Gesture-To-Text",
+      "html_url": "https://github.com/Ridit07/Selective-Mutism-Hand-Gesture-To-Text",
+      "homepage": "",
+      "description": "Real-time hand gesture recognition system for selective mutism, converting signs into text using computer vision and a Random Forest model, enabling hands-free communication.",
+      "language": "Python",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "assistive-technology",
+        "computer-vision",
+        "gesture-recognition",
+        "opencv",
+        "python",
+        "random-forest"
+      ]
+    },
+    {
+      "id": "R_kgDOKTo9ww",
+      "name": "SIH-ATITHI-ABHINANDAN-TRAVEL-APP",
+      "full_name": "Ridit07/SIH-ATITHI-ABHINANDAN-TRAVEL-APP",
+      "html_url": "https://github.com/Ridit07/SIH-ATITHI-ABHINANDAN-TRAVEL-APP",
+      "homepage": "",
+      "description": "Award-winning travel & tourism platform with AI chatbot, profile matching, real-time assistance, and sustainable community network.",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "ai",
+        "chatbot",
+        "ml",
+        "smart-india-hackathon",
+        "travel"
+      ]
+    },
+    {
+      "id": "R_kgDOMVkSiA",
+      "name": "Nurturing-Positivity-Enhancing-News-Summarization-through-Reinforcement-Learning-LLM",
+      "full_name": "Ridit07/Nurturing-Positivity-Enhancing-News-Summarization-through-Reinforcement-Learning-LLM",
+      "html_url": "https://github.com/Ridit07/Nurturing-Positivity-Enhancing-News-Summarization-through-Reinforcement-Learning-LLM",
+      "homepage": "",
+      "description": "A novel approach to news summarization that promotes positive and constructive narratives by integrating sentiment and toxicity control into the summarisation process.",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "llm",
+        "reinforcement-learning",
+        "text-summarization",
+        "toxicity-detection",
+        "positive-content-generation"
+      ]
+    },
+    {
+      "id": "R_kgDOJUQCkQ",
+      "name": "E-COMMERCE-PURCHASE-PREDICTION-ML",
+      "full_name": "Ridit07/E-COMMERCE-PURCHASE-PREDICTION-ML",
+      "html_url": "https://github.com/Ridit07/E-COMMERCE-PURCHASE-PREDICTION-ML",
+      "homepage": "",
+      "description": "Predict whether a customer will make a purchase on an e-commerce website using Machine Learning models, with 89% accuracy achieved via Random Forest.",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "machine-learning",
+        "purchase-prediction",
+        "python",
+        "streamlit"
+      ]
+    },
+    {
+      "id": "R_kgDOMWRyhw",
+      "name": "Interview-Pro",
+      "full_name": "Ridit07/Interview-Pro",
+      "html_url": "https://github.com/Ridit07/Interview-Pro",
+      "homepage": "",
+      "description": "Helps streamline the interview process with cheat detection, insight analysis, and structured evaluation reports.",
+      "language": "Python",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "deep-learning",
+        "flask",
+        "mysql",
+        "nlp",
+        "python",
+        "react",
+        "webrtc"
+      ]
+    },
+    {
+      "id": "R_kgDOJFXIOA",
+      "name": "Web-Browser",
+      "full_name": "Ridit07/Web-Browser",
+      "html_url": "https://github.com/Ridit07/Web-Browser",
+      "homepage": "",
+      "description": "",
+      "language": "Python",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": []
+    },
+    {
+      "id": "R_kgDOMVj33A",
+      "name": "NLP-Powered-Legal-Document-Generation-System",
+      "full_name": "Ridit07/NLP-Powered-Legal-Document-Generation-System",
+      "html_url": "https://github.com/Ridit07/NLP-Powered-Legal-Document-Generation-System",
+      "homepage": "",
+      "description": "",
+      "language": "Python",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": []
+    },
+    {
+      "id": "R_kgDOLhVlGw",
+      "name": "Classifying-Sentiment-of-Restaurant-Reviews-NLP",
+      "full_name": "Ridit07/Classifying-Sentiment-of-Restaurant-Reviews-NLP",
+      "html_url": "https://github.com/Ridit07/Classifying-Sentiment-of-Restaurant-Reviews-NLP",
+      "homepage": "",
+      "description": "",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": []
+    },
+    {
+      "id": "R_kgDOIi9WYw",
+      "name": "infinity-graphics-node",
+      "full_name": "Ridit07/infinity-graphics-node",
+      "html_url": "https://github.com/Ridit07/infinity-graphics-node",
+      "homepage": "",
+      "description": "",
+      "language": "CSS",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": []
+    },
+    {
+      "id": "R_kgDOIi87Nw",
+      "name": "ridit07.github.io",
+      "full_name": "Ridit07/ridit07.github.io",
+      "html_url": "https://github.com/Ridit07/ridit07.github.io",
+      "homepage": "",
+      "description": "",
+      "language": "HTML",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": []
+    },
+    {
+      "id": "R_kgDOIgpRAA",
+      "name": "Library-Management-App",
+      "full_name": "Ridit07/Library-Management-App",
+      "html_url": "https://github.com/Ridit07/Library-Management-App",
+      "homepage": "",
+      "description": "",
+      "language": "Java",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": []
+    }
+  ],
+  "pinned": [
+    "ridit07/medical-chatbot-llm",
+    "ridit07/interview-pro",
+    "ridit07/lane-detection-using-deep-learning",
+    "ridit07/sih-atithi-abhinandan-travel-app",
+    "ridit07/ridit07.github.io",
+    "ridit07/selective-mutism-hand-gesture-to-text"
+  ]
+}

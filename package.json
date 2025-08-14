@@ -5,9 +5,11 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "prebuild": "node scripts/build-github-catalog.mjs",
         "build": "vite build",
         "preview": "vite preview",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "prefetch": "node scripts/build-github-catalog.mjs"
     },
     "dependencies": {
         "react": "^18.3.1",

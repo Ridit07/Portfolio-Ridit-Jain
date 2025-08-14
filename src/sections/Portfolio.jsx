@@ -101,19 +101,21 @@ export default function Portfolio() {
   
     (async () => {
       try {
-        // 1) Check localStorage first
+        // 1) Check localStorage
         const cached = loadCatalogCache(GITHUB_USER);
         if (cached && alive) {
+          console.log("[SOURCE] Loaded from localStorage cache");
           const prepared = prepareItems(cached.repos);
           const ordered = orderPinned(prepared, cached.pinned);
           setItems(ordered);
           setLoading(false);
         }
   
-        // 2) Fallback to static JSON
+        // 2) Static JSON fallback
         if (!cached) {
           const staticData = await fetchCatalogStatic().catch(() => null);
           if (staticData && alive) {
+            console.log("[SOURCE] Loaded from static /github-catalog.json");
             const prepared = prepareItems(staticData.repos);
             const ordered = orderPinned(prepared, staticData.pinned);
             setItems(ordered);
@@ -121,15 +123,15 @@ export default function Portfolio() {
           }
         }
   
-        // 3) Refresh from API (hot cache or fresh data)
+        // 3) API refresh (always happens)
         setErr("");
         const apiData = await fetchCatalogAPI(GITHUB_USER);
         if (!alive) return;
+        console.log("[SOURCE] Loaded from live GitHub API");
         const prepared = prepareItems(apiData.repos);
         const ordered = orderPinned(prepared, apiData.pinned);
         setItems(ordered);
   
-        // Save to localStorage
         saveCatalogCache(GITHUB_USER, apiData);
         setLoading(false);
       } catch (e) {
@@ -140,7 +142,7 @@ export default function Portfolio() {
     })();
   
     return () => { alive = false; };
-  }, []);
+  }, []);  
   
   
 

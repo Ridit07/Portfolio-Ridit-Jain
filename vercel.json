@@ -1,0 +1,18 @@
+{
+    "framework": "vite",
+    "functions": {
+      "api/github/catalog.js": {
+        "maxDuration": 10
+      },
+      "api/github/readme.js": {
+        "maxDuration": 10
+      }
+    },
+    "crons": [
+      {
+        "path": "/api/github/catalog?user=Ridit07&refresh=1",
+        "schedule": "*/2 * * * *"
+      }
+    ]
+  }
+  

@@ -1,4 +1,4 @@
-// api/github/readme.js  
+// api/github/readme.js
 export default async function handler(req, res) {
     try {
       const owner = req.query.owner;
@@ -8,7 +8,7 @@ export default async function handler(req, res) {
       const token = process.env.GH_TOKEN;
       if (!token) return res.status(500).json({ error: "Server missing GH_TOKEN" });
   
-      const gh = (url, init={}) =>
+      const gh = (url, init = {}) =>
         fetch(url, {
           ...init,
           headers: {
@@ -18,10 +18,10 @@ export default async function handler(req, res) {
           },
         });
   
-      // JSON /readme (base64)
+      // Try the JSON /readme (base64)
       const rr = await gh(`https://api.github.com/repos/${owner}/${repo}/readme`);
       if (rr.status === 404) {
-        // try raw files
+        // Fallback to raw
         const candidates = ["README.md", "Readme.md", "readme.md", "README.MD"];
         for (const file of candidates) {
           const raw = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${file}`);
@@ -31,7 +31,8 @@ export default async function handler(req, res) {
             return res.status(200).json({ markdown });
           }
         }
-        return res.status(200).json({ markdown: "" }); // no readme
+        res.setHeader("Cache-Control", "s-maxage=600, stale-while-revalidate=86400");
+        return res.status(200).json({ markdown: "" });
       }
       if (!rr.ok) {
         const t = await rr.text();

@@ -101,22 +101,36 @@ export default function Portfolio() {
   
     (async () => {
       try {
-        // 1) Try static JSON (instant, zero cold start)
-        const staticData = await fetchCatalogStatic().catch(() => null);
-        if (staticData && alive) {
-          const prepared = prepareItems(staticData.repos);
-          const ordered = orderPinned(prepared, staticData.pinned);
+        // 1) Check localStorage first
+        const cached = loadCatalogCache(GITHUB_USER);
+        if (cached && alive) {
+          const prepared = prepareItems(cached.repos);
+          const ordered = orderPinned(prepared, cached.pinned);
           setItems(ordered);
           setLoading(false);
         }
   
-        // 2) Always refresh from API (hot cache via cron; memo inside function)
+        // 2) Fallback to static JSON
+        if (!cached) {
+          const staticData = await fetchCatalogStatic().catch(() => null);
+          if (staticData && alive) {
+            const prepared = prepareItems(staticData.repos);
+            const ordered = orderPinned(prepared, staticData.pinned);
+            setItems(ordered);
+            setLoading(false);
+          }
+        }
+  
+        // 3) Refresh from API (hot cache or fresh data)
         setErr("");
         const apiData = await fetchCatalogAPI(GITHUB_USER);
         if (!alive) return;
         const prepared = prepareItems(apiData.repos);
         const ordered = orderPinned(prepared, apiData.pinned);
         setItems(ordered);
+  
+        // Save to localStorage
+        saveCatalogCache(GITHUB_USER, apiData);
         setLoading(false);
       } catch (e) {
         if (!alive) return;
@@ -127,6 +141,7 @@ export default function Portfolio() {
   
     return () => { alive = false; };
   }, []);
+  
   
 
   const filters = useMemo(() => {

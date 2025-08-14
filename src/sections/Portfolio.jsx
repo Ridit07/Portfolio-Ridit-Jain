@@ -4,13 +4,10 @@ import remarkGfm from "remark-gfm";
 import { SectionTitle } from "../components/ui.jsx";
 import "../styles/portfolio.css";
 
+/** ====== CONFIG ====== */
+const GITHUB_USER = "Ridit07";
 
-const GITHUB_USER = "Ridit07";    
-const MAX_REPOS   = 50;
-const READ_README = true;          
-const README_WORDS = 60;          
-const GH_TOKEN = import.meta.env.VITE_GH_TOKEN || ""; 
-
+/** Category mapping rules (same as before) */
 const CATEGORY_RULES = [
   { label: "AI/ML",           match: /(ml|ai|llm|pytorch|tensorflow|cv|vision|nlp|langchain|yolo)/i },
   { label: "Applications",    match: /(flutter|android|kotlin|ios|desktop|cli|electron)/i },
@@ -23,154 +20,103 @@ function categorize({ topics = [], language = "", description = "" }) {
   return "Misc";
 }
 
+/** Prefer repo/portfolio.png; else fall back to GitHub OpenGraph image */
 const rawPNG = (owner, repo) =>
   `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/portfolio.png`;
 const ogImage = (owner, repo) =>
   `https://opengraph.githubassets.com/${Date.now()}/${owner}/${repo}`;
 
-async function gh(url, body) {
-  const init = {
-    method: body ? "POST" : "GET",
-    headers: {
-      Accept: "application/vnd.github+json",
-      ...(body ? { "Content-Type": "application/json" } : {}),
-      ...(GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : {}),
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  };
-  const res = await fetch(url, init);
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.json();
+/** ====== Client helpers (no token on the client!) ====== */
+const README_CACHE = new Map();
+
+async function fetchCatalog(username) {
+  const res = await fetch(`/api/github/catalog?user=${encodeURIComponent(username)}`);
+  if (!res.ok) throw new Error(`Catalog ${res.status} ${res.statusText}`);
+  return res.json(); // { repos, pinned }
 }
 
-async function fetchPinned(username) {
-  if (!GH_TOKEN) return [];
-  const query = `
-    query($login:String!) {
-      user(login: $login) {
-        pinnedItems(first: 6, types: REPOSITORY) {
-          nodes { ... on Repository { name owner { login } } }
-        }
-      }
-    }
-  `;
-  const data = await gh("https://api.github.com/graphql", {
-    query,
-    variables: { login: username },
-  });
-  const nodes = data?.data?.user?.pinnedItems?.nodes || [];
-  return nodes.map(n => `${n.owner.login}/${n.name}`.toLowerCase());
-}
-
-async function fetchRepos(username) {
-  const repos = await gh(
-    `https://api.github.com/users/${username}/repos?per_page=${MAX_REPOS}&sort=updated`
+async function fetchReadmeServer(owner, repo, signal) {
+  const res = await fetch(
+    `/api/github/readme?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`,
+    { signal }
   );
-  return repos
-    .filter(r => !r.fork)
-    .map(r => ({
-      id: r.id,
-      name: r.name,
-      full_name: r.full_name,
-      html_url: r.html_url,
-      homepage: r.homepage || "",
-      description: r.description || "", 
-      language: r.language || "",
-      stargazers_count: r.stargazers_count || 0,
-      owner: r.owner?.login || username,
-    }));
+  if (!res.ok) throw new Error(`README ${res.status} ${res.statusText}`);
+  const { markdown } = await res.json();
+  return markdown || "";
 }
 
-function b64ToUtf8(b64) {
-  const bin = atob(b64.replace(/\n/g, ""));
-  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-  return new TextDecoder("utf-8").decode(bytes);
+async function fetchReadmeClient(owner, repo, signal) {
+  const key = `${owner}/${repo}`.toLowerCase();
+  if (README_CACHE.has(key)) return README_CACHE.get(key);
+  const md = await fetchReadmeServer(owner, repo, signal);
+  README_CACHE.set(key, md);
+  return md;
 }
 
-function extractReadme(b64, words = README_WORDS) {
-  const md = b64ToUtf8(b64);
-  const plain = md
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/[#>*_`]|!\[[^\]]*\]\([^)]+\)|\[[^\]]*\]\([^)]+\)/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const excerpt = plain.split(" ").slice(0, words).join(" ");
-  return {
-    blurb: excerpt && excerpt.length > 20 ? `${excerpt}…` : "",
-    full: md, 
-  };
-}
-
-async function enrichRepo(repo) {
-  const [topicsRes, readmeRes] = await Promise.allSettled([
-    gh(`https://api.github.com/repos/${repo.owner}/${repo.name}/topics`),
-    READ_README ? gh(`https://api.github.com/repos/${repo.owner}/${repo.name}/readme`) : Promise.resolve({}),
-  ]);
-
-  const topics = topicsRes.status === "fulfilled" ? (topicsRes.value?.names || []) : [];
-
-  let cardDesc = repo.description || "";
-  let readmeFull = "";
-  if (READ_README && readmeRes.status === "fulfilled" && readmeRes.value?.content) {
-    const { blurb, full } = extractReadme(readmeRes.value.content, README_WORDS);
-    readmeFull = full;
-    if (!cardDesc && blurb) cardDesc = blurb;
+/** tiny localStorage cache for the catalog (10 minutes) */
+const CATALOG_CACHE_KEY = (u) => `gh_catalog_${u}`;
+const CATALOG_TTL_MS = 10 * 60 * 1000;
+function loadCatalogCache(user) {
+  try {
+    const s = localStorage.getItem(CATALOG_CACHE_KEY(user));
+    if (!s) return null;
+    const j = JSON.parse(s);
+    if (Date.now() - j.t > CATALOG_TTL_MS) return null;
+    return j.data; // { repos, pinned }
+  } catch {
+    return null;
   }
-
-  const cat = categorize({ topics, language: repo.language, description: cardDesc });
-
-  return {
-    ...repo,
-    topics,
-    cat,
-    blurb: cardDesc || "No description yet.",
-    readme: readmeFull,              
-    imgPreferred: rawPNG(repo.owner, repo.name),
-    imgFallback: ogImage(repo.owner, repo.name),
-  };
+}
+function saveCatalogCache(user, data) {
+  try {
+    localStorage.setItem(
+      CATALOG_CACHE_KEY(user),
+      JSON.stringify({ t: Date.now(), data })
+    );
+  } catch {}
 }
 
+/** ====== Component ====== */
 export default function Portfolio() {
   const [tab, setTab] = useState("All");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [items, setItems] = useState([]);
-  const [modal, setModal] = useState(null);
+  const [modal, setModal] = useState(null); // selected repo
 
   useEffect(() => {
     let alive = true;
+
+    // 1) Try cache first for instant UI
+    const cached = loadCatalogCache(GITHUB_USER);
+    if (cached) {
+      const prepared = prepareItems(cached.repos);
+      const ordered = orderPinned(prepared, cached.pinned);
+      setItems(ordered);
+      setLoading(false);
+    }
+
+    // 2) Always refresh in background
     (async () => {
       setErr("");
-      setLoading(true);
+      if (!cached) setLoading(true);
       try {
-        const [base, pinnedList] = await Promise.all([
-          fetchRepos(GITHUB_USER),
-          fetchPinned(GITHUB_USER).catch(() => []),
-        ]);
-
-        const enriched = await Promise.all(base.map(enrichRepo));
-
-        const pinnedSet = new Set(pinnedList);
-        const indexMap = new Map(pinnedList.map((n, i) => [n, i]));
-        const pinned = [];
-        const others = [];
-        for (const r of enriched) {
-          const key = r.full_name.toLowerCase();
-          if (pinnedSet.has(key)) pinned.push(r);
-          else others.push(r);
-        }
-        pinned.sort((a, b) => indexMap.get(a.full_name.toLowerCase()) - indexMap.get(b.full_name.toLowerCase()));
-        others.sort((a, b) => b.stargazers_count - a.stargazers_count);
-
+        const data = await fetchCatalog(GITHUB_USER); // { repos, pinned }
         if (!alive) return;
-        setItems([...pinned, ...others]);
+        saveCatalogCache(GITHUB_USER, data);
+
+        const prepared = prepareItems(data.repos);
+        const ordered = orderPinned(prepared, data.pinned);
+        setItems(ordered);
       } catch (e) {
         if (!alive) return;
         setErr(e.message || "Failed to load GitHub projects.");
       } finally {
-        if (alive) setLoading(false);
+        if (!alive) return;
+        setLoading(false);
       }
     })();
+
     return () => { alive = false; };
   }, []);
 
@@ -188,6 +134,7 @@ export default function Portfolio() {
     <section>
       <SectionTitle title="Portfolio" />
 
+      {/* Filters */}
       <div className="mt-4 flex flex-wrap gap-2 text-sm">
         {filters.map((f) => (
           <button
@@ -204,14 +151,15 @@ export default function Portfolio() {
         ))}
       </div>
 
+      {/* Error */}
       {err && (
         <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm">
-          {err} {!GH_TOKEN && " Tip: add VITE_GH_TOKEN in .env to fetch pinned repos and lift rate limits."}
+          {err}
         </div>
       )}
 
-<div className="mt-6 grid gap-5 md:grid-cols-3 items-stretch">
-
+      {/* Grid */}
+      <div className="mt-6 grid gap-5 md:grid-cols-3 items-stretch">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
           : shown.map((p) => (
@@ -219,20 +167,52 @@ export default function Portfolio() {
             ))}
       </div>
 
+      {/* Modal (README loads inside) */}
       {modal && (
         <Modal onClose={() => setModal(null)}>
           <QuickLook repo={modal} />
         </Modal>
       )}
-
-  
     </section>
   );
 }
 
+/** ===== helpers to prep/sort items ===== */
+function prepareItems(repos) {
+  return repos.map((r) => {
+    const cat = categorize({
+      topics: r.topics || [],
+      language: r.language,
+      description: r.description || "",
+    });
+    return {
+      ...r,
+      cat,
+      blurb: r.description || "No description yet.",
+      imgPreferred: rawPNG(r.owner, r.name),
+      imgFallback: ogImage(r.owner, r.name),
+    };
+  });
+}
+
+function orderPinned(list, pinnedList = []) {
+  const pinnedSet = new Set((pinnedList || []).map((x) => x.toLowerCase()));
+  const indexMap = new Map((pinnedList || []).map((n, i) => [n.toLowerCase(), i]));
+  const P = [];
+  const O = [];
+  for (const r of list) {
+    const key = r.full_name.toLowerCase();
+    if (pinnedSet.has(key)) P.push(r);
+    else O.push(r);
+  }
+  P.sort((a, b) => indexMap.get(a.full_name.toLowerCase()) - indexMap.get(b.full_name.toLowerCase()));
+  O.sort((a, b) => b.stargazers_count - a.stargazers_count);
+  return [...P, ...O];
+}
+
+/** ===== Cards / Modal ===== */
 function ProjectCard({ p, onOpen }) {
   const stop = (e) => e.stopPropagation();
-
   return (
     <article
       onClick={onOpen}
@@ -313,7 +293,6 @@ function ProjectCard({ p, onOpen }) {
   );
 }
 
-
 function SkeletonCard() {
   return (
     <div className="rounded-2xl bg-[#0f1115] border border-white/10 overflow-hidden animate-pulse">
@@ -357,8 +336,31 @@ function Modal({ children, onClose }) {
 }
 
 function QuickLook({ repo }) {
+  const [md, setMd] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    setLoading(true);
+    setErr("");
+    setMd("");
+
+    fetchReadmeClient(repo.owner, repo.name, ctrl.signal)
+      .then((text) => setMd(text || ""))
+      .catch((e) => {
+        if (e.name !== "AbortError") setErr(e.message || "Failed to load README.");
+      })
+      .finally(() => {
+        if (!ctrl.signal.aborted) setLoading(false);
+      });
+
+    return () => ctrl.abort();
+  }, [repo.owner, repo.name]);
+
   return (
     <>
+      {/* header */}
       <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-md overflow-hidden border border-white/10 bg-white/5">
@@ -379,34 +381,24 @@ function QuickLook({ repo }) {
         </div>
         <div className="flex items-center gap-2">
           {repo.homepage && (
-            <a
-              href={repo.homepage}
-              target="_blank"
-              rel="noreferrer"
-              className="btn"
-            >
-              Live
-            </a>
+            <a href={repo.homepage} target="_blank" rel="noreferrer" className="btn">Live</a>
           )}
-          <a
-            href={repo.html_url}
-            target="_blank"
-            rel="noreferrer"
-            className="btn btn-acc"
-          >
-            GitHub
-          </a>
+          <a href={repo.html_url} target="_blank" rel="noreferrer" className="btn btn-acc">GitHub</a>
         </div>
       </div>
 
+      {/* content */}
       <div className="px-4 md:px-5 py-4 overflow-auto max-h-[calc(85vh-56px)]">
-        {repo.readme ? (
+        {loading && <div className="text-sm text-zinc-400">Loading README…</div>}
+        {!loading && err && <div className="text-sm text-red-300">{err}</div>}
+        {!loading && !err && md && (
           <div className="markdown">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {repo.readme}
+              {md}
             </ReactMarkdown>
           </div>
-        ) : (
+        )}
+        {!loading && !err && !md && (
           <p className="text-sm text-zinc-300">No README found for this repository.</p>
         )}
       </div>

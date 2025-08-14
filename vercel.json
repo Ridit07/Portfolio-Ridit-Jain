@@ -1,5 +1,5 @@
 {
-    "framework": "vite",
+    "framework": "create-react-app",
     "functions": {
       "api/github/catalog.js": {
         "maxDuration": 10

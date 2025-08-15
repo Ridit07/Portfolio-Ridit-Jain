@@ -4,10 +4,8 @@ import remarkGfm from "remark-gfm";
 import { SectionTitle } from "../components/ui.jsx";
 import "../styles/portfolio.css";
 
-/** ====== CONFIG ====== */
 const GITHUB_USER = "Ridit07";
 
-/** Category mapping rules (same as before) */
 const CATEGORY_RULES = [
   { label: "AI/ML",           match: /(ml|ai|llm|pytorch|tensorflow|cv|vision|nlp|langchain|yolo)/i },
   { label: "Applications",    match: /(flutter|android|kotlin|ios|desktop|cli|electron)/i },
@@ -26,7 +24,6 @@ const rawPNG = (owner, repo) =>
 const ogImage = (owner, repo) =>
   `https://opengraph.githubassets.com/${Date.now()}/${owner}/${repo}`;
 
-/** ====== Client helpers (no token on the client!) ====== */
 const README_CACHE = new Map();
 
 async function fetchCatalog(username) {

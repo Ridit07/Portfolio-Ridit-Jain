@@ -20,7 +20,6 @@ function categorize({ topics = [], language = "", description = "" }) {
 
 
 
-/** Prefer repo/portfolio.png; else fall back to GitHub OpenGraph image */
 const rawPNG = (owner, repo, v = "1") =>
   `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/portfolio.png?v=${encodeURIComponent(v)}`;
 const ogImage = (owner, repo, v = "1") =>

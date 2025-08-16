@@ -18,30 +18,34 @@ function categorize({ topics = [], language = "", description = "" }) {
   return "Misc";
 }
 
+
+
 /** Prefer repo/portfolio.png; else fall back to GitHub OpenGraph image */
-const rawPNG = (owner, repo) =>
-  `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/portfolio.png`;
-const ogImage = (owner, repo) =>
-  `https://opengraph.githubassets.com/${Date.now()}/${owner}/${repo}`;
+const rawPNG = (owner, repo, v = "1") =>
+  `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/portfolio.png?v=${encodeURIComponent(v)}`;
+const ogImage = (owner, repo, v = "1") =>
+  `https://opengraph.githubassets.com/portfolio-${encodeURIComponent(v)}/${owner}/${repo}`;
 
 const README_CACHE = new Map();
 
-async function fetchCatalog(username) {
-  const res = await fetch(`/api/github/catalog?user=${encodeURIComponent(username)}`);
-  if (!res.ok) throw new Error(`Catalog ${res.status} ${res.statusText}`);
-  return res.json(); // { repos, pinned }
-}
+// async function fetchCatalog(username) {
+//   const res = await fetch(`/api/github/catalog?user=${encodeURIComponent(username)}`);
+//   if (!res.ok) throw new Error(`Catalog ${res.status} ${res.statusText}`);
+//   return res.json(); // { repos, pinned }
+// }
 
 async function fetchCatalogStatic() {
-  const res = await fetch("/github-catalog.json", { cache: "force-cache" });
+  const res = await fetch(`/github-catalog.json?v=${Date.now()}`, { cache: "no-cache" });
   if (!res.ok) throw new Error(`Static catalog ${res.status} ${res.statusText}`);
-  return res.json(); // { user, fetched_at, repos, pinned }
+  return res.json();
 }
+
+
 async function fetchCatalogAPI(username, { refresh = false } = {}) {
   const url = `/api/github/catalog?user=${encodeURIComponent(username)}${refresh ? "&refresh=1" : ""}`;
   const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`API catalog ${res.status} ${res.statusText}`);
-  return res.json();
+  return res.json(); // { repos, pinned, asset_version, readmes? }
 }
 
 async function fetchReadmeServer(owner, repo, signal) {
@@ -56,34 +60,118 @@ async function fetchReadmeServer(owner, repo, signal) {
 
 async function fetchReadmeClient(owner, repo, signal) {
   const key = `${owner}/${repo}`.toLowerCase();
+
+  // 1) in-memory cache
   if (README_CACHE.has(key)) return README_CACHE.get(key);
+
+  // 2) localStorage cache
+  const ls = loadReadmesCache(GITHUB_USER);
+  const mdLS = ls?.md?.[key];
+  if (mdLS != null) {
+    README_CACHE.set(key, mdLS);
+    return mdLS;
+  }
+
+  // 3) fallback to static JSON (if it contains readmes)
+  try {
+    // NOTE: use no-cache in dev to avoid stale copies; switch to force-cache if you prefer
+    const res = await fetch("/github-catalog.json", { cache: "no-cache", signal });
+    if (res.ok) {
+      const j = await res.json(); // { readmes? }
+      const mdStatic = j?.readmes?.[key];
+      if (typeof mdStatic === "string") {
+        README_CACHE.set(key, mdStatic);
+
+        // merge-save into LS for next time
+        const curr = loadReadmesCache(GITHUB_USER);
+        const merged = { ...(curr?.md || {}), [key]: mdStatic };
+        saveReadmesCache(GITHUB_USER, merged, j?.asset_version || "1");
+
+        return mdStatic;
+      }
+    }
+  } catch (_) {
+    // ignore fetch errors here; we have one more fallback
+  }
+
+  // 4) last resort: server API
   const md = await fetchReadmeServer(owner, repo, signal);
   README_CACHE.set(key, md);
+
+  // merge-save to LS for future fast loads
+  const merged = { ...(ls?.md || {}), [key]: md };
+  saveReadmesCache(GITHUB_USER, merged, lsGet(ASSET_VERSION_KEY(GITHUB_USER)) || "1");
+
   return md;
 }
 
+
+
 /** tiny localStorage cache for the catalog (10 minutes) */
+const hasLS = () => typeof window !== "undefined" && !!window.localStorage;
+const lsGet = (k) => { try { return hasLS() ? localStorage.getItem(k) : null; } catch { return null; } };
+const lsSet = (k, v) => { try { if (hasLS()) localStorage.setItem(k, v); } catch {} };
+
 const CATALOG_CACHE_KEY = (u) => `gh_catalog_${u}`;
+const READMES_CACHE_KEY = (u) => `gh_readmes_${u}`;
+const ASSET_VERSION_KEY = (u) => `gh_assets_v_${u}`;
+
 const CATALOG_TTL_MS = 10 * 60 * 1000;
+const READMES_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+
+
 function loadCatalogCache(user) {
   try {
-    const s = localStorage.getItem(CATALOG_CACHE_KEY(user));
+    const s = lsGet(CATALOG_CACHE_KEY(user));
     if (!s) return null;
     const j = JSON.parse(s);
     if (Date.now() - j.t > CATALOG_TTL_MS) return null;
-    return j.data; // { repos, pinned }
-  } catch {
-    return null;
-  }
+    return j.data;
+  } catch { return null; }
 }
+
 function saveCatalogCache(user, data) {
-  try {
-    localStorage.setItem(
-      CATALOG_CACHE_KEY(user),
-      JSON.stringify({ t: Date.now(), data })
-    );
-  } catch {}
+  try { lsSet(CATALOG_CACHE_KEY(user), JSON.stringify({ t: Date.now(), data })); } catch {}
 }
+
+function loadReadmesCache(user) {
+  try {
+    const s = lsGet(READMES_CACHE_KEY(user));
+    if (!s) return null;
+    const j = JSON.parse(s); // { t, v, md: { "owner/repo": "markdown" } }
+    if (Date.now() - j.t > READMES_TTL_MS) return null;
+    return j;
+  } catch { return null; }
+}
+function saveReadmesCache(user, mdMap, v) {
+  try { lsSet(READMES_CACHE_KEY(user), JSON.stringify({ t: Date.now(), v, md: mdMap })); } catch {}
+}
+
+function mergeReadmesIntoCaches(user, readmes, v) {
+  if (!readmes) return;
+  // in-memory
+  for (const [key, md] of Object.entries(readmes)) README_CACHE.set(key, md || "");
+  // localStorage (merge)
+  const cur = loadReadmesCache(user);
+  const merged = { ...(cur?.md || {}), ...readmes };
+  saveReadmesCache(user, merged, v);
+  // remember version
+lsSet(ASSET_VERSION_KEY(user), String(v || "1"));
+}
+function getAssetVersion(user) {
+  return lsGet(ASSET_VERSION_KEY(user)) || "1";
+}
+
+
+const getRefreshFlag = () => {
+  try {
+    const u = new URL(window.location.href);
+    return u.searchParams.get("refresh") === "1";
+  } catch {
+    return false;
+  }
+};
 
 /** ====== Component ====== */
 export default function Portfolio() {
@@ -91,46 +179,70 @@ export default function Portfolio() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [items, setItems] = useState([]);
-  const [modal, setModal] = useState(null); // selected repo
+  const [modal, setModal] = useState(null);
+  const [assetVersion, setAssetVersion] = useState(() => getAssetVersion(GITHUB_USER));
 
   useEffect(() => {
     let alive = true;
   
     (async () => {
       try {
-        // 1) Check localStorage
+        let dataLoaded = false;
+        const forceRefresh = getRefreshFlag();
+  
+        // 1) localStorage (fresh if TTL not expired)
         const cached = loadCatalogCache(GITHUB_USER);
         if (cached && alive) {
-          console.log("[SOURCE] Loaded from localStorage cache");
-          const prepared = prepareItems(cached.repos);
-          const ordered = orderPinned(prepared, cached.pinned);
+          const v = cached.asset_version || getAssetVersion(GITHUB_USER);
+          setAssetVersion(v);
+          mergeReadmesIntoCaches(GITHUB_USER, cached.readmes, v);
+          const prepared = prepareItems(cached.repos, v);
+          const ordered  = orderPinned(prepared, cached.pinned);
           setItems(ordered);
-          setLoading(false);
+          dataLoaded = true;
+
+         // backgroundVersionCheck(GITHUB_USER, setItems, setAssetVersion);
+
         }
   
-        // 2) Static JSON fallback
-        if (!cached) {
-          const staticData = await fetchCatalogStatic().catch(() => null);
+        // 2) static fallback (only if no LS cache)
+        let staticData = null;
+        if (!dataLoaded) {
+          staticData = await fetchCatalogStatic().catch(() => null);
           if (staticData && alive) {
-            console.log("[SOURCE] Loaded from static /github-catalog.json");
-            const prepared = prepareItems(staticData.repos);
-            const ordered = orderPinned(prepared, staticData.pinned);
+            const v = staticData.asset_version || getAssetVersion(GITHUB_USER);
+            setAssetVersion(v);
+            mergeReadmesIntoCaches(GITHUB_USER, staticData.readmes, v);
+            const prepared = prepareItems(staticData.repos, v);
+            const ordered  = orderPinned(prepared, staticData.pinned);
             setItems(ordered);
-            setLoading(false);
+            dataLoaded = true;
+
+         //   backgroundVersionCheck(GITHUB_USER, setItems, setAssetVersion);
+
           }
         }
   
-        // 3) API refresh (always happens)
-        setErr("");
-        const apiData = await fetchCatalogAPI(GITHUB_USER);
-        if (!alive) return;
-        console.log("[SOURCE] Loaded from live GitHub API");
-        const prepared = prepareItems(apiData.repos);
-        const ordered = orderPinned(prepared, apiData.pinned);
-        setItems(ordered);
+        // 3) live API — only if nothing loaded OR explicitly forced
+        if (!dataLoaded || forceRefresh) {
+          setErr("");
+          const apiData = await fetchCatalogAPI(GITHUB_USER, { refresh: forceRefresh });
+          if (!alive) return;
   
-        saveCatalogCache(GITHUB_USER, apiData);
-        setLoading(false);
+          const v = apiData.asset_version || getAssetVersion(GITHUB_USER);
+          setAssetVersion(v);
+          mergeReadmesIntoCaches(GITHUB_USER, apiData.readmes, v);
+  
+          const prepared = prepareItems(apiData.repos, v);
+          const ordered  = orderPinned(prepared, apiData.pinned);
+          setItems(ordered);
+  
+          saveCatalogCache(GITHUB_USER, apiData);
+          lsSet(ASSET_VERSION_KEY(GITHUB_USER), String(v));
+        }
+  
+        // finish loading state once anything above settles
+        if (alive) setLoading(false);
       } catch (e) {
         if (!alive) return;
         setErr(e.message || "Failed to load GitHub projects.");
@@ -139,58 +251,58 @@ export default function Portfolio() {
     })();
   
     return () => { alive = false; };
-  }, []);  
-  
+  }, []);
   
 
-  const filters = useMemo(() => {
-    const cats = new Set(items.map(i => i.cat));
-    return ["All", ...Array.from(cats)];
+  // ---------- RENDER (this was missing) ----------
+  const tabs = useMemo(() => {
+    const set = new Set(items.map(i => i.cat));
+    return ["All", ...Array.from(set)];
   }, [items]);
 
-  const shown = useMemo(
-    () => items.filter(p => tab === "All" || p.cat === tab),
+  const filtered = useMemo(
+    () => (tab === "All" ? items : items.filter(i => i.cat === tab)),
     [items, tab]
   );
 
   return (
-    <section>
-      <SectionTitle title="Portfolio" />
+    <section className="px-4 md:px-6">
+      <SectionTitle title="Projects" subtitle={`GitHub · assets v${assetVersion}`} />
 
-      {/* Filters */}
-      <div className="mt-4 flex flex-wrap gap-2 text-sm">
-        {filters.map((f) => (
+      {/* Tabs */}
+      <div className="mt-3 mb-5 flex flex-wrap gap-2">
+        {tabs.map(t => (
           <button
-            key={f}
-            onClick={() => setTab(f)}
-            className={`rounded-full px-4 py-2 border transition ${
-              tab === f
-                ? "border-[color:var(--acc)] text-white bg-white/5"
-                : "border-white/10 text-zinc-300 hover:bg-white/5"
-            }`}
+            key={t}
+            className={`btn ${t === tab ? "btn-acc" : ""}`}
+            onClick={() => setTab(t)}
           >
-            {f}
+            {t}
           </button>
         ))}
       </div>
 
       {/* Error */}
       {err && (
-        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm">
+        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
           {err}
         </div>
       )}
 
       {/* Grid */}
-      <div className="mt-6 grid gap-5 md:grid-cols-3 items-stretch">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-          : shown.map((p) => (
-              <ProjectCard key={p.id} p={p} onOpen={() => setModal(p)} />
+          : filtered.map(repo => (
+              <ProjectCard
+                key={repo.id}
+                p={repo}
+                onOpen={() => setModal(repo)}
+              />
             ))}
       </div>
 
-      {/* Modal (README loads inside) */}
+      {/* Modal */}
       {modal && (
         <Modal onClose={() => setModal(null)}>
           <QuickLook repo={modal} />
@@ -200,20 +312,22 @@ export default function Portfolio() {
   );
 }
 
+
 /** ===== helpers to prep/sort items ===== */
-function prepareItems(repos) {
+function prepareItems(repos, assetVersion = "1") {
   return repos.map((r) => {
     const cat = categorize({
       topics: r.topics || [],
       language: r.language,
       description: r.description || "",
     });
+    const v = assetVersion || "1";
     return {
       ...r,
       cat,
       blurb: r.description || "No description yet.",
-      imgPreferred: rawPNG(r.owner, r.name),
-      imgFallback: ogImage(r.owner, r.name),
+      imgPreferred: rawPNG(r.owner, r.name, v),
+      imgFallback: ogImage(r.owner, r.name, v),
     };
   });
 }

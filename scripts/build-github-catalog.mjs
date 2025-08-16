@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 const GH_TOKEN = process.env.GH_TOKEN;
 const GH_USER = process.env.GH_USER || "Ridit07";
 const MAX_REPOS = Number(process.env.MAX_REPOS || 100);
+const MAX_READMES = Number(process.env.MAX_READMES || 30);
+const INCLUDE_READMES = process.env.INCLUDE_READMES === "1";
 
 if (!GH_TOKEN) {
   console.error("❌ GH_TOKEN is required for build prefetch.");
@@ -90,9 +92,50 @@ function mapRepo(r) {
   const payload = {
     user: GH_USER,
     fetched_at: new Date().toISOString(),
+    asset_version: String(Date.now()), // <= lets you version images on client
     repos,
     pinned,
   };
+
+  if (INCLUDE_READMES) {
+    const preferred = [
+      ...new Set([
+        ...pinned,
+        ...repos.slice(0, MAX_READMES).map(r => r.full_name.toLowerCase()),
+      ]),
+    ].slice(0, MAX_READMES);
+  
+    async function fetchReadmeMD(owner, repo) {
+      const rr = await fetch(`https://api.github.com/repos/${owner}/${repo}/readme`, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${GH_TOKEN}`,
+          "User-Agent": "ridit-portfolio-build",
+        },
+      });
+      if (rr.status === 404) {
+        const candidates = ["README.md", "Readme.md", "readme.md", "README.MD"];
+        for (const file of candidates) {
+          const raw = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${file}`);
+          if (raw.ok) return await raw.text();
+        }
+        return "";
+      }
+      if (!rr.ok) return "";
+      const j = await rr.json();
+      const b64 = (j.content || "").replace(/\n/g, "");
+      return Buffer.from(b64, "base64").toString("utf-8");
+    }
+  
+    const readmes = {};
+    for (const full of preferred) {
+      const [owner, repo] = full.split("/");
+      try { readmes[full] = await fetchReadmeMD(owner, repo); }
+      catch { readmes[full] = ""; }
+    }
+    payload.readmes = readmes;
+  }
+  
 
   fs.writeFileSync(outFile, JSON.stringify(payload, null, 2));
   console.log(`✅ Wrote ${repos.length} repos to public/github-catalog.json`);

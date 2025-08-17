@@ -271,7 +271,7 @@ export default function Portfolio() {
         if (!dataLoaded) {
           staticData = await fetchCatalogStatic().catch(() => null);
           if (staticData && alive) {
-            const v = staticData.asset_version || getAssetVersion(GITHUB_USER);
+            const v = staticData.asset_version ?? getAssetVersion(GITHUB_USER) ?? "1";
             lsSet(ASSET_VERSION_KEY(GITHUB_USER), String(v));
             setAssetVersion(v);
             mergeReadmesIntoCaches(GITHUB_USER, staticData.readmes, v);
@@ -279,6 +279,8 @@ export default function Portfolio() {
             const ordered  = orderPinned(prepared, staticData.pinned);
             setItems(ordered);
             dataLoaded = true;
+            saveCatalogCache(GITHUB_USER, staticData);
+
 
          //   backgroundVersionCheck(GITHUB_USER, setItems, setAssetVersion);
 

@@ -115,7 +115,7 @@ const CATALOG_CACHE_KEY = (u) => `gh_catalog_${u}`;
 const READMES_CACHE_KEY = (u) => `gh_readmes_${u}`;
 const ASSET_VERSION_KEY = (u) => `gh_assets_v_${u}`;
 
-const CATALOG_TTL_MS = 10 * 60 * 1000;
+const CATALOG_TTL_MS = 1000 * 60 * 60;
 const READMES_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 
@@ -125,7 +125,10 @@ function loadCatalogCache(user) {
     const s = lsGet(CATALOG_CACHE_KEY(user));
     if (!s) return null;
     const j = JSON.parse(s);
-    if (Date.now() - j.t > CATALOG_TTL_MS) return null;
+    if (Date.now() - j.t > CATALOG_TTL_MS) {
+      try { localStorage.removeItem(CATALOG_CACHE_KEY(user)); } catch {}
+      return null;
+    }
     return j.data;
   } catch { return null; }
 }
@@ -134,12 +137,70 @@ function saveCatalogCache(user, data) {
   try { lsSet(CATALOG_CACHE_KEY(user), JSON.stringify({ t: Date.now(), data })); } catch {}
 }
 
+
+// if (typeof window !== "undefined" && import.meta?.env?.DEV) {
+//   const user = GITHUB_USER;
+
+//   window.__ghcache = {
+//     keys: {
+//       catalog: CATALOG_CACHE_KEY(user),
+//       readmes: READMES_CACHE_KEY(user),
+//       version: ASSET_VERSION_KEY(user),
+//     },
+
+//     show() {
+//       const cat = localStorage.getItem(CATALOG_CACHE_KEY(user));
+//       const rdm = localStorage.getItem(READMES_CACHE_KEY(user));
+//       const ver = localStorage.getItem(ASSET_VERSION_KEY(user));
+//       console.log({
+//         catalog: cat ? JSON.parse(cat) : null,
+//         readmes: rdm ? JSON.parse(rdm) : null,
+//         asset_version: ver || null,
+//       });
+//     },
+
+//     clear() {
+//       localStorage.removeItem(CATALOG_CACHE_KEY(user));
+//       localStorage.removeItem(READMES_CACHE_KEY(user));
+//       localStorage.removeItem(ASSET_VERSION_KEY(user));
+//       console.log("Cleared catalog/readmes/version keys.");
+//     },
+
+//     expireCatalog(msPast = CATALOG_TTL_MS + 1) {
+//       const raw = localStorage.getItem(CATALOG_CACHE_KEY(user));
+//       if (!raw) return console.warn("No catalog cache to expire.");
+//       const j = JSON.parse(raw);
+//       j.t = Date.now() - msPast;
+//       localStorage.setItem(CATALOG_CACHE_KEY(user), JSON.stringify(j));
+//       console.log("Catalog cache timestamp moved to the past. Next load should treat it as expired.");
+//     },
+
+//     expireReadmes(msPast = READMES_TTL_MS + 1) {
+//       const raw = localStorage.getItem(READMES_CACHE_KEY(user));
+//       if (!raw) return console.warn("No readmes cache to expire.");
+//       const j = JSON.parse(raw);
+//       j.t = Date.now() - msPast;
+//       localStorage.setItem(READMES_CACHE_KEY(user), JSON.stringify(j));
+//       console.log("Readmes cache timestamp moved to the past. Next README fetch should treat it as expired.");
+//     },
+
+//     shortenTTLs({ catalogMs = 5000, readmesMs = 10000 } = {}) {
+//       window.__TEST_TTLS__ = { catalogMs, readmesMs };
+//       console.warn("Short TTLs enabled (dev):", window.__TEST_TTLS__);
+//     },
+//   };
+// }
+
+
 function loadReadmesCache(user) {
   try {
     const s = lsGet(READMES_CACHE_KEY(user));
     if (!s) return null;
     const j = JSON.parse(s); // { t, v, md: { "owner/repo": "markdown" } }
-    if (Date.now() - j.t > READMES_TTL_MS) return null;
+    if (Date.now() - j.t > READMES_TTL_MS) {
+      localStorage.removeItem(READMES_CACHE_KEY(user)); // <== hard delete
+      return null;
+    }
     return j;
   } catch { return null; }
 }
@@ -156,7 +217,7 @@ function mergeReadmesIntoCaches(user, readmes, v) {
   const merged = { ...(cur?.md || {}), ...readmes };
   saveReadmesCache(user, merged, v);
   // remember version
-lsSet(ASSET_VERSION_KEY(user), String(v || "1"));
+lsSet(ASSET_VERSION_KEY(user), String(v));
 }
 function getAssetVersion(user) {
   return lsGet(ASSET_VERSION_KEY(user)) || "1";
@@ -193,6 +254,7 @@ export default function Portfolio() {
         const cached = loadCatalogCache(GITHUB_USER);
         if (cached && alive) {
           const v = cached.asset_version || getAssetVersion(GITHUB_USER);
+          lsSet(ASSET_VERSION_KEY(GITHUB_USER), String(v));
           setAssetVersion(v);
           mergeReadmesIntoCaches(GITHUB_USER, cached.readmes, v);
           const prepared = prepareItems(cached.repos, v);
@@ -209,13 +271,16 @@ export default function Portfolio() {
         if (!dataLoaded) {
           staticData = await fetchCatalogStatic().catch(() => null);
           if (staticData && alive) {
-            const v = staticData.asset_version || getAssetVersion(GITHUB_USER);
+            const v = staticData.asset_version ?? getAssetVersion(GITHUB_USER) ?? "1";
+            lsSet(ASSET_VERSION_KEY(GITHUB_USER), String(v));
             setAssetVersion(v);
             mergeReadmesIntoCaches(GITHUB_USER, staticData.readmes, v);
             const prepared = prepareItems(staticData.repos, v);
             const ordered  = orderPinned(prepared, staticData.pinned);
             setItems(ordered);
             dataLoaded = true;
+            saveCatalogCache(GITHUB_USER, staticData);
+
 
          //   backgroundVersionCheck(GITHUB_USER, setItems, setAssetVersion);
 

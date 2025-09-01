@@ -1,8 +1,26 @@
 {
   "user": "Ridit07",
-  "fetched_at": "2025-08-16T18:15:21.825Z",
-  "asset_version": "1755368121826",
+  "fetched_at": "2025-08-31T15:57:59.156Z",
+  "asset_version": "1756655879156",
   "repos": [
+    {
+      "id": "R_kgDOKTo9ww",
+      "name": "SIH-ATITHI-ABHINANDAN-TRAVEL-APP",
+      "full_name": "Ridit07/SIH-ATITHI-ABHINANDAN-TRAVEL-APP",
+      "html_url": "https://github.com/Ridit07/SIH-ATITHI-ABHINANDAN-TRAVEL-APP",
+      "homepage": "",
+      "description": "Award-winning travel & tourism platform with AI chatbot, profile matching, real-time assistance, and sustainable community network.",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 1,
+      "owner": "Ridit07",
+      "topics": [
+        "ai",
+        "chatbot",
+        "ml",
+        "smart-india-hackathon",
+        "travel"
+      ]
+    },
     {
       "id": "R_kgDOMVkHyg",
       "name": "Medical-Chatbot-LLM",
@@ -205,24 +223,6 @@
         "opencv",
         "python",
         "random-forest"
-      ]
-    },
-    {
-      "id": "R_kgDOKTo9ww",
-      "name": "SIH-ATITHI-ABHINANDAN-TRAVEL-APP",
-      "full_name": "Ridit07/SIH-ATITHI-ABHINANDAN-TRAVEL-APP",
-      "html_url": "https://github.com/Ridit07/SIH-ATITHI-ABHINANDAN-TRAVEL-APP",
-      "homepage": "",
-      "description": "Award-winning travel & tourism platform with AI chatbot, profile matching, real-time assistance, and sustainable community network.",
-      "language": "Jupyter Notebook",
-      "stargazers_count": 0,
-      "owner": "Ridit07",
-      "topics": [
-        "ai",
-        "chatbot",
-        "ml",
-        "smart-india-hackathon",
-        "travel"
       ]
     },
     {

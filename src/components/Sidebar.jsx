@@ -1,18 +1,22 @@
-import React, { useState } from "react";
-import { MiniInfo, IconLink, Stat, Icons } from "./ui.jsx";
+import React from "react";
+import { MiniInfo, Icons } from "./ui.jsx";
 
 /* Local accent to avoid circular import */
 const ACCENT = "#f5c84b";
+
+// fetch from env
+const CV_LINK = import.meta.env.VITE_CV_LINK;
 
 export default function Sidebar() {
   return (
     <aside
       className="
-        rounded-2xl md:rounded-3xl bg-[#161a22] border border-white/10 p-5
-        md:sticky md:top-6 z-20
-        md:h-[calc(100dvh-3rem)] overflow-auto no-scrollbar
-      "
+    rounded-2xl md:rounded-3xl bg-[#161a22] border border-white/10 p-5
+    md:sticky md:top-6 z-20
+    overflow-auto no-scrollbar
+  "
     >
+
       {/* Header */}
       <div className="flex flex-col items-center text-center md:items-start md:text-left">
         <div className="h-24 w-24 md:h-28 md:w-28 rounded-2xl bg-gradient-to-br from-zinc-700 to-zinc-800 border border-white/10 overflow-hidden">
@@ -24,158 +28,90 @@ export default function Sidebar() {
 
       {/* Info */}
       <div className="mt-5 space-y-3">
-        <MiniInfo icon={<Icons.Mail />}  label="EMAIL"    value="riditjain07@gmail.com" />
-        <MiniInfo icon={<Icons.Phone />} label="PHONE"    value="+91 9560410184" />
-        <MiniInfo icon={<Icons.Cake />}  label="BIRTHDAY" value="2 March, 2003" />
-        <MiniInfo icon={<Icons.Pin />}   label="LOCATION" value="Gurugram, Haryana, India" />
+        <MiniInfo icon={<Icons.Mail />} label="EMAIL" value="riditjain07@gmail.com" />
+        <MiniInfo icon={<Icons.Pin />} label="LOCATION" value="Gurugram, Haryana, India" />
       </div>
 
-      {/* Social */}
-      <div className="mt-5 flex items-center gap-2 md:justify-start justify-center">
-        <IconLink href="https://github.com/Ridit07" label="GitHub"><Icons.GitHub /></IconLink>
-        <IconLink href="https://www.linkedin.com/in/ridit-jain-479230214/" label="LinkedIn"><Icons.LinkedIn /></IconLink>
-        <IconLink href="mailto:riditjain07@gmail.com" label="Email"><Icons.Mail /></IconLink>
+      {/* Social — proper buttons */}
+      <div className="mt-5 grid grid-cols-1 gap-2">
+        <SocialButton
+          href="https://github.com/Ridit07"
+          label="GitHub"
+          icon={<Icons.GitHub />}
+          accent={ACCENT}
+        />
+        <SocialButton
+          href="https://www.linkedin.com/in/ridit-jain-479230214/"
+          label="LinkedIn"
+          icon={<Icons.LinkedIn />}
+          accent={ACCENT}
+        />
+        <SocialButton
+          href={CV_LINK}
+          label="Download CV"
+          icon={<DownloadIcon />}
+          accent={ACCENT}
+          download
+        />
       </div>
-
-      {/* Quick stats */}
-      <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-        <Stat label="Services" value="10+" />
-        <Stat label="Deploys"  value="50+" />
-        <Stat label="Uptime"   value=">99%" />
-      </div>
-
-      {/* === New: Actions (best place — directly in the sidebar) === */}
-      <ActionPanel />
-
-      
     </aside>
   );
 }
 
-/* Copy email action with feedback */
-/* Accent used in the UI */
-
-/* ===== Beautiful compact action panel ===== */
-function ActionPanel() {
-  return (
-    <div className="mt-5 rounded-2xl border border-white/10 bg-[#0f1115] p-4">
-      {/* Header strip */}
-      <div
-        className="mb-3 h-[2px] rounded-full"
-        style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}, transparent)` }}
-      />
-
-      {/* Primary CTA */}
-      <a
-        href="https://cal.com/your-handle/30min"
-        className="group relative block w-full rounded-xl px-4 py-3 text-center font-semibold"
-        style={{
-          background: `linear-gradient(180deg, ${ACCENT}, #e5b63d)`,
-          color: "#0f1115",
-          boxShadow: "0 6px 18px rgba(245,200,75,0.25)"
-        }}
-      >
-        <div className="inline-flex items-center gap-2">
-          <CalendarSolid />
-          <span>Schedule a 30-min call</span>
-        </div>
-        <span className="absolute inset-0 rounded-xl ring-0 ring-[rgba(245,200,75,0.0)] group-hover:ring-2 transition" />
-      </a>
-
-      {/* Secondary actions — labeled tiles */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        <CopyEmailTile email="riditjain07@gmail.com" />
-        <TileLink
-          href="https://wa.me/919560410184"
-          label="WhatsApp"
-          icon={<WhatsAppSolid />}
-        />
-        <TileLink
-          href="/RiditJain_CV.pdf"
-          label="Resume"
-          icon={<DownloadSolid />}
-          download
-        />
-      </div>
-    </div>
-  );
-}
-
-/* ---- tiles ---- */
-function TileLink({ href, label, icon, download }) {
+/* === Reusable, themed social button === */
+function SocialButton({ href, label, icon, accent, download }) {
   return (
     <a
       href={href}
+      target="_blank"
+      rel="noreferrer"
       download={download}
-      className="group rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition p-2 text-center"
-      title={label}
+      className="
+        group relative inline-flex items-center justify-between
+        rounded-2xl border border-white/10 bg-white/5
+        px-4 py-3
+        hover:bg-white/10 transition
+      "
       aria-label={label}
+      title={label}
+      style={{ boxShadow: "0 6px 18px rgba(245,200,75,0.06)" }}
     >
-      <div className="mx-auto h-9 w-9 rounded-lg grid place-items-center bg-[#0f1115] border border-white/10 group-hover:border-white/20">
-        {icon}
-      </div>
-      <div className="mt-1 text-[11px] text-zinc-300">{label}</div>
+      <span className="flex items-center gap-3">
+        <span
+          className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-[#0f1115] group-hover:border-white/20"
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+        <span className="font-medium tracking-wide">{label}</span>
+      </span>
+      <span className="opacity-60 group-hover:opacity-100 transition" aria-hidden="true">
+        <ChevronRightBold />
+      </span>
+      <span
+        className="pointer-events-none absolute inset-x-3 -bottom-[2px] h-[2px] rounded-full opacity-70 group-hover:opacity-100 transition"
+        style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }}
+        aria-hidden="true"
+      />
     </a>
   );
 }
 
-function CopyEmailTile({ email }) {
-  const [ok, setOk] = useState(false);
+function ChevronRightBold() {
   return (
-    <button
-      onClick={async () => {
-        try { await navigator.clipboard.writeText(email); setOk(true); setTimeout(()=>setOk(false), 1100); } catch {}
-      }}
-      className="group w-full rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition p-2 text-center"
-      title="Copy email"
-      aria-live="polite"
-    >
-      <div className="mx-auto h-9 w-9 rounded-lg grid place-items-center bg-[#0f1115] border border-white/10 group-hover:border-white/20">
-        {ok ? <CheckSolid /> : <CopySolid />}
-      </div>
-      <div className="mt-1 text-[11px] text-zinc-300">{ok ? "Copied" : "Copy email"}</div>
-    </button>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
   );
 }
 
-/* ---- bolder icons for visibility ---- */
-function CalendarSolid() {
+/* clean download icon */
+function DownloadIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-      <rect x="3" y="5" width="18" height="16" rx="2"></rect>
-      <path d="M7 2v3M17 2v3M3 9h18" stroke="#0f1115" strokeWidth="1.3" />
-    </svg>
-  );
-}
-function WhatsAppSolid() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20 12a8 8 0 1 1-12.2 6.7L4 20l1.3-3.6A8 8 0 0 1 20 12z" />
-      <path d="M8.7 8.9c-.2-.5-.4-.5-.6-.5-.9 0-1.9.9-1.5 2.3.5 1.6 2.3 3.6 4.4 4.9 2.1 1.3 3.2 1.4 3.9 1.2.7-.2 1.3-.8 1.5-1.5.2-.6.1-1-.1-1.2s-1.4-.6-1.9-.8c-.5-.2-.8.1-1 .4l-.7.8c-.2.2-.3.2-.6.1-1.1-.5-2.1-1.1-3-2-.9-.9-1.4-1.7-1.6-2.1-.1-.2 0-.4.2-.6l.9-1c.1-.2.1-.4 0-.6l-.7-1.6z" />
-    </svg>
-  );
-}
-function DownloadSolid() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 3v10l3.8-3.8L12 3z" />
-      <path d="M5 21h14" />
-      <path d="M12 13l-3.8-3.8L12 3v10z" />
-    </svg>
-  );
-}
-function CopySolid() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <rect x="9" y="9" width="10" height="10" rx="2" />
-      <rect x="5" y="5" width="10" height="10" rx="2" />
-    </svg>
-  );
-}
-function CheckSolid() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20 6L9 17l-5-5" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v12" />
+      <path d="M6 11l6 6 6-6" />
+      <rect x="4" y="19" width="16" height="2" rx="1" fill="currentColor" />
     </svg>
   );
 }

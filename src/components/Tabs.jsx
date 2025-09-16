@@ -5,8 +5,8 @@ export default function Tabs({ active, onChange }) {
   const tabs = [
     { k: "about", label: "About" },
     { k: "resume", label: "Resume" },
-    { k: "portfolio", label: "Portfolio" },
-    { k: "blog", label: "Blog" },
+    { k: "portfolio", label: "Projects" },
+    { k: "blog", label: "Stats" },
     { k: "contact", label: "Contact" },
   ];
 

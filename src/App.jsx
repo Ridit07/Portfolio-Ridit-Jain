@@ -29,8 +29,8 @@ export default function App() {
           <Tabs active={active} onChange={setActive} />
           {active === "about" && <About />}
           {active === "resume" && <Resume />}
-          {active === "projects" && <Portfolio />}
-          {active === "stats" && <Blog />}
+          {active === "portfolio" && <Portfolio />}
+          {active === "blog" && <Blog />}
           {active === "contact" && <Contact />}
         </main>
       </div>

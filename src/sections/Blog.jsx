@@ -11,7 +11,7 @@ const LINKEDIN_URL = "https://www.linkedin.com/in/ridit-jain-479230214/";
 
 const GH_VER = "v1";
 const GH_CACHE_KEY = (u) => `gh_stats_${GH_VER}_${u}`;
-const GH_TTL_MS = 60 * 60 * 1000; // 1 hour
+const GH_TTL_MS = 6 * 60 * 60 * 1000; // 6 hour
 
 const LC_VER = "v3";
 const LC_CACHE_KEY = (u) => `lc_contest_${LC_VER}_${u}`;
@@ -61,28 +61,81 @@ function saveLcContestCache(user, data) {
 // };
 
 
-async function ghPublic(url) {
-  const r = await fetch(url, { headers: { Accept: "application/vnd.github+json" } });
-  if (!r.ok) {
-    const text = await r.text().catch(() => "");
-    throw new Error(`${r.status} ${r.statusText}${text ? ` – ${text.slice(0, 120)}` : ""}`);
+// async function ghPublic(url) {
+//   const r = await fetch(url, { headers: { Accept: "application/vnd.github+json" } });
+//   if (!r.ok) {
+//     const text = await r.text().catch(() => "");
+//     throw new Error(`${r.status} ${r.statusText}${text ? ` – ${text.slice(0, 120)}` : ""}`);
+//   }
+//   return r.json();
+// }
+
+
+async function ghViaProxy(path, etagKey) {
+  const etag = lsGet(etagKey);
+  const res = await fetch(`/api/github?path=${encodeURIComponent(path)}`, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      ...(etag ? { "If-None-Match": etag } : {}),
+    },
+  });
+
+  if (res.status === 304) {
+    // caller should keep its own cached JSON; just signal to use it
+    throw new Error("__USE_CACHE__");
   }
-  return r.json();
+
+  const text = await res.text().catch(() => "");
+  if (!res.ok) throw new Error(text || `${res.status} ${res.statusText}`);
+
+  const newEtag = res.headers.get("etag");
+  if (newEtag) lsSet(etagKey, newEtag);
+
+  return JSON.parse(text);
 }
 
+
+// async function fetchGhStats(user) {
+//   // user + repos
+//   const [u, repos] = await Promise.all([
+//     ghPublic(`https://api.github.com/users/${user}`),
+//     ghPublic(`https://api.github.com/users/${user}/repos?per_page=100&sort=updated`),
+//   ]);
+//   // events pages (best-effort)
+//   const pages = await Promise.all([
+//     ghPublic(`https://api.github.com/users/${user}/events/public?per_page=100&page=1`).catch(() => []),
+//     ghPublic(`https://api.github.com/users/${user}/events/public?per_page=100&page=2`).catch(() => []),
+//     ghPublic(`https://api.github.com/users/${user}/events/public?per_page=100&page=3`).catch(() => []),
+//   ]);
+//   return { user: u, repos, events: pages.flat() };
+// }
+
 async function fetchGhStats(user) {
-  // user + repos
-  const [u, repos] = await Promise.all([
-    ghPublic(`https://api.github.com/users/${user}`),
-    ghPublic(`https://api.github.com/users/${user}/repos?per_page=100&sort=updated`),
-  ]);
-  // events pages (best-effort)
-  const pages = await Promise.all([
-    ghPublic(`https://api.github.com/users/${user}/events/public?per_page=100&page=1`).catch(() => []),
-    ghPublic(`https://api.github.com/users/${user}/events/public?per_page=100&page=2`).catch(() => []),
-    ghPublic(`https://api.github.com/users/${user}/events/public?per_page=100&page=3`).catch(() => []),
-  ]);
-  return { user: u, repos, events: pages.flat() };
+  // 1) /users
+  const u = await ghViaProxy(`/users/${user}`, `etag_user_${user}`);
+
+  // 2) /repos
+  const repos = await ghViaProxy(`/users/${user}/repos?per_page=100&sort=updated`, `etag_repos_${user}`);
+
+  // 3) /events — keep only page 1 (reduce calls)
+  let events = [];
+  try {
+    events = await ghViaProxy(`/users/${user}/events/public?per_page=100&page=1`, `etag_events_p1_${user}`);
+  } catch (e) {
+    if (String(e.message) !== "__USE_CACHE__") events = [];
+  }
+
+  return { user: u, repos, events };
+}
+
+
+function isGhCacheFresh(user) {
+  try {
+    const raw = lsGet(GH_CACHE_KEY(user));
+    if (!raw) return false;
+    const j = JSON.parse(raw); // { t, data }
+    return (Date.now() - j.t) <= GH_TTL_MS;
+  } catch { return false; }
 }
 
 
@@ -96,6 +149,30 @@ async function fetchLcContest(user) {
   const json = await res.json();
   if (!res.ok || json.error) throw new Error(json.error || `${res.status} ${res.statusText}`);
   return json; // { rating, ranking, attended, topPercentage, _fetched_at }
+}
+
+async function fetchCalendar(login, days = 365) {
+  const key = `gh_cal_${login}_${days}`;
+  const etagKey = `${key}_etag`;
+  const etag = lsGet(etagKey);
+
+  const res = await fetch(`/api/github/calendar?login=${encodeURIComponent(login)}&days=${days}`, {
+    headers: { ...(etag ? { "If-None-Match": etag } : {}) }
+  });
+
+  if (res.status === 304) {
+    const cached = lsGet(key);
+    if (cached) return JSON.parse(cached);
+  }
+
+  if (!res.ok) throw new Error(`Calendar ${res.status} ${res.statusText}`);
+
+  const newEtag = res.headers.get("etag");
+  const json = await res.json();
+
+  if (newEtag) lsSet(etagKey, newEtag);
+  lsSet(key, JSON.stringify(json));
+  return json; // { total, weeks, _fetched_at, ... }
 }
 
 
@@ -166,6 +243,9 @@ export default function Blog() {
   const [ghRepos, setGhRepos] = useState([]);
   const [ghEvents, setGhEvents] = useState([]);
   const [err, setErr] = useState("");
+  const [calendar, setCalendar] = useState(null);
+  const [calErr, setCalErr] = useState("");
+
 
   const [lc, setLc] = useState(null);
   const [lcErr, setLcErr] = useState("");
@@ -182,21 +262,22 @@ export default function Blog() {
     }
 
 
-    (async () => {
-      try {
-        const fresh = await fetchGhStats(GITHUB_USER);
-        if (!alive) return;
-        setGhUser(fresh.user);
-        setGhRepos(fresh.repos);
-        setGhEvents(fresh.events);
-        saveGhStatsCache(GITHUB_USER, fresh);
-        setErr(""); // clear any previous error
-      } catch (e) {
-        if (!alive) return;
-        // keep whatever we had (maybe cached), show soft error
-        setErr(e.message || "Failed to refresh GitHub stats.");
-      }
-    })();
+    if (!isGhCacheFresh(GITHUB_USER)) {
+      (async () => {
+        try {
+          const fresh = await fetchGhStats(GITHUB_USER);
+          if (!alive) return;
+          setGhUser(fresh.user);
+          setGhRepos(fresh.repos);
+          setGhEvents(fresh.events);
+          saveGhStatsCache(GITHUB_USER, fresh);
+          setErr("");
+        } catch (e) {
+          if (!alive) return;
+          setErr(e.message || "Failed to refresh GitHub stats.");
+        }
+      })();
+    }
 
     const lcCached = loadLcContestCache(LEETCODE_USER);
     if (lcCached && alive) setLc(lcCached);
@@ -211,6 +292,18 @@ export default function Blog() {
       } catch (e) {
         if (!alive) return;
         setLcErr(e.message || "Failed to load LeetCode contest stats.");
+      }
+    })();
+
+    (async () => {
+      try {
+        const data = await fetchCalendar(GITHUB_USER, 365);
+        if (!alive) return;
+        setCalendar(data);
+        setCalErr("");
+      } catch (e) {
+        if (!alive) return;
+        setCalErr(e.message || "Failed to load calendar.");
       }
     })();
 
@@ -257,73 +350,84 @@ export default function Blog() {
         </a>
       </div>
 
-      <GitHubCalendar login={GITHUB_USER} />
+      {calErr && (
+        <div className="mt-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm">
+          {calErr}
+        </div>
+      )}
+
+      <GitHubCalendar
+        login={GITHUB_USER}
+        data={calendar}        // <-- new prop
+        days={365}             // optional
+      />
+
 
       <div className="mt-6">
-  <LeetCodeContestCard lc={lc} lcErr={lcErr} />
-</div>
+        <LeetCodeContestCard lc={lc} lcErr={lcErr} />
+      </div>
 
       {/* --- three-up row: LeetCode Activity, Contest Stats, Top Languages --- */}
       <div className="mt-6 grid gap-5 md:grid-cols-2">
-  {/* LeetCode Activity (unchanged) */}
-  <div className="rounded-2xl bg-[#0f1115] border border-white/10 overflow-hidden">
-    <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b border-white/10">
-      <h4 className="text-lg font-semibold">LeetCode Activity</h4>
-      <a
-        className="text-xs rounded-full px-3 py-1 border border-white/10 bg-white/5 hover:bg-white/10"
-        href={`https://leetcode.com/${LEETCODE_USER}/`} target="_blank" rel="noreferrer"
-      >
-        Profile
-      </a>
-    </div>
-    <div className="p-4">
-      <img
-        alt="LeetCode heatmap"
-        className="w-full rounded-xl border border-white/10"
-        src={`https://leetcard.jacoblin.cool/${LEETCODE_USER}?theme=dark&ext=heatmap`}
-        onError={(e)=>{ e.currentTarget.style.display="none"; }}
-        loading="lazy"
-      />
-      <p className="mt-2 text-sm text-zinc-400">This calendar shows my LeetCode streak/solves.</p>
-    </div>
-  </div>
-
-  {/* Top Languages (unchanged) */}
-  <div className="rounded-2xl bg-[#0f1115] border border-white/10 overflow-hidden">
-    <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b border-white/10">
-      <h4 className="text-lg font-semibold">Top Languages (by repo)</h4>
-      <a
-        className="text-xs rounded-full px-3 py-1 border border-white/10 bg-white/5 hover:bg-white/10"
-        href={`https://github.com/${GITHUB_USER}?tab=repositories`} target="_blank" rel="noreferrer"
-      >
-        See repos
-      </a>
-    </div>
-    <div className="p-4">
-      {langs.length === 0 ? (
-        <p className="text-sm text-zinc-400">No language data yet.</p>
-      ) : (
-        <div className="space-y-3">
-          {langs.map(([lang,count]) => (
-            <div key={lang}>
-              <div className="flex justify-between text-sm">
-                <span className="text-zinc-2 00">{lang}</span>
-                <span className="text-zinc-400">{count}</span>
-              </div>
-              <div className="h-2 rounded-full bg-white/5 border border-white/10 overflow-hidden">
-                <div className="h-full" style={{
-                  width: `${(count / langs[0][1]) * 100}%`,
-                  background: "linear-gradient(90deg, #1f9d55, #10b981)"
-                }} />
-              </div>
-            </div>
-          ))}
+        {/* LeetCode Activity (unchanged) */}
+        <div className="rounded-2xl bg-[#0f1115] border border-white/10 overflow-hidden">
+          <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b border-white/10">
+            <h4 className="text-lg font-semibold">LeetCode Activity</h4>
+            <a
+              className="text-xs rounded-full px-3 py-1 border border-white/10 bg-white/5 hover:bg-white/10"
+              href={`https://leetcode.com/${LEETCODE_USER}/`} target="_blank" rel="noreferrer"
+            >
+              Profile
+            </a>
+          </div>
+          <div className="p-4">
+            <img
+              alt="LeetCode heatmap"
+              className="w-full rounded-xl border border-white/10"
+              src={`https://leetcard.jacoblin.cool/${LEETCODE_USER}?theme=dark&ext=heatmap`}
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+              loading="lazy"
+            />
+            <p className="mt-2 text-sm text-zinc-400">This calendar shows my LeetCode streak/solves.</p>
+          </div>
         </div>
-      )}
-      <p className="mt-2 text-xs text-zinc-400">Approximation using the primary language each repo reports.</p>
-    </div>
-  </div>
-</div>
+
+        {/* Top Languages (unchanged) */}
+        <div className="rounded-2xl bg-[#0f1115] border border-white/10 overflow-hidden">
+          <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b border-white/10">
+            <h4 className="text-lg font-semibold">Top Languages (by repo)</h4>
+            <a
+              className="text-xs rounded-full px-3 py-1 border border-white/10 bg-white/5 hover:bg-white/10"
+              href={`https://github.com/${GITHUB_USER}?tab=repositories`} target="_blank" rel="noreferrer"
+            >
+              See repos
+            </a>
+          </div>
+          <div className="p-4">
+            {langs.length === 0 ? (
+              <p className="text-sm text-zinc-400">No language data yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {langs.map(([lang, count]) => (
+                  <div key={lang}>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-zinc-2 00">{lang}</span>
+                      <span className="text-zinc-400">{count}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-white/5 border border-white/10 overflow-hidden">
+                      <div className="h-full" style={{
+                        width: `${(count / langs[0][1]) * 100}%`,
+                        background: "linear-gradient(90deg, #1f9d55, #10b981)"
+                      }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="mt-2 text-xs text-zinc-400">Approximation using the primary language each repo reports.</p>
+          </div>
+        </div>
+      </div>
 
 
       {/* existing images row unchanged */}
@@ -578,8 +682,8 @@ function ContestHistogram({ topPercentage }) {
   const idx = bucketFromTop(topPercentage);
 
   const pctRange = (i) => {
-    const high = Math.max(0, 100 - (i)   * (100 / bins));   // inclusive high (better)
-    const low  = Math.max(0, 100 - (i+1) * (100 / bins));   // exclusive low
+    const high = Math.max(0, 100 - (i) * (100 / bins));   // inclusive high (better)
+    const low = Math.max(0, 100 - (i + 1) * (100 / bins));   // exclusive low
     return { low, high };
   };
 
@@ -587,8 +691,8 @@ function ContestHistogram({ topPercentage }) {
     const { low, high } = pctRange(i);
     const range = `${high.toFixed(0)}–${low.toFixed(0)}%`;
     return i === idx && topPercentage != null
-      ? `You • Top ${Number(topPercentage).toFixed(2)}% • Bucket ${i+1}/${bins} (${range})`
-      : `Bucket ${i+1}/${bins} (${range})`;
+      ? `You • Top ${Number(topPercentage).toFixed(2)}% • Bucket ${i + 1}/${bins} (${range})`
+      : `Bucket ${i + 1}/${bins} (${range})`;
   };
 
   const onEnter = (i, e) => {
@@ -611,7 +715,7 @@ function ContestHistogram({ topPercentage }) {
             key={i}
             className="w-[10px] rounded-[3px] transition-opacity"
             title={tipText(i)}
-            onMouseEnter={(e)=>onEnter(i, e)}
+            onMouseEnter={(e) => onEnter(i, e)}
             style={{
               height: `${h}px`,
               background: i === idx ? "#f59e0b" : "rgba(255,255,255,0.14)",

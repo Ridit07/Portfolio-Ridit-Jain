@@ -1,35 +1,48 @@
+import { useEffect, useRef, useState } from "react";
 import { ACCENT } from "../App.jsx";
 
 export default function Tabs({ active, onChange }) {
   const tabs = [
-    { k: "about",     label: "About" },
-    { k: "resume",    label: "Resume" },
+    { k: "about", label: "About" },
+    { k: "resume", label: "Resume" },
     { k: "portfolio", label: "Portfolio" },
-    { k: "blog",      label: "Blog" },
-    { k: "contact",   label: "Contact" },
+    { k: "blog", label: "Blog" },
+    { k: "contact", label: "Contact" },
   ];
+
+  const btnRefs = useRef({});
+  const [indicatorStyle, setIndicatorStyle] = useState({});
+
+  useEffect(() => {
+    const el = btnRefs.current[active];
+    if (el) {
+      setIndicatorStyle({
+        left: el.offsetLeft,
+        width: el.offsetWidth,
+      });
+    }
+  }, [active]);
 
   return (
     <div className="mb-6 -mx-2 md:mx-0">
-      {/* Mobile: horizontal scroll; Desktop: inline */}
-      <div
-        className="
-          overflow-x-auto no-scrollbar px-2
-        "
-      >
-        <div className="inline-flex gap-1 rounded-full bg-white/5 border border-white/10 p-1">
+      <div className="overflow-x-auto no-scrollbar px-2">
+        <div className="relative inline-flex gap-1 rounded-full bg-white/5 border border-white/10 p-1">
+          <span
+            className="absolute top-1 bottom-1 rounded-full bg-white/10 border border-white/10 shadow-inner transition-all duration-300"
+            style={indicatorStyle}
+          />
           {tabs.map((t) => {
             const isActive = active === t.k;
             return (
               <button
                 key={t.k}
+                ref={(el) => (btnRefs.current[t.k] = el)}
                 onClick={() => onChange(t.k)}
                 aria-current={isActive ? "page" : undefined}
                 className={`
-                  flex-none px-4 py-2 text-sm rounded-full transition
-                  ${isActive ? "bg-white/10 text-white border border-white/10" : "text-zinc-300 hover:text-white"}
+                  relative flex-none px-4 py-2 text-sm rounded-full transition
+                  ${isActive ? "text-white" : "text-zinc-300 hover:text-white"}
                 `}
-                style={isActive ? { boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.12)` } : undefined}
               >
                 {t.label}
               </button>

@@ -12,6 +12,8 @@
         "prefetch": "node scripts/build-github-catalog.mjs"
     },
     "dependencies": {
+        "@vercel/analytics": "^1.5.0",
+        "@vercel/speed-insights": "^1.2.0",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-helmet-async": "^2.0.5",

@@ -1,5 +1,6 @@
 import React from "react";
 import { MiniInfo, Icons } from "./ui.jsx";
+import RiditAvatar from "../assets/avatar/RiditAvatar.jpeg";
 
 /* Local accent to avoid circular import */
 const ACCENT = "#f5c84b";
@@ -20,7 +21,7 @@ export default function Sidebar() {
       {/* Header */}
       <div className="flex flex-col items-center text-center md:items-start md:text-left">
         <div className="h-24 w-24 md:h-28 md:w-28 rounded-2xl bg-gradient-to-br from-zinc-700 to-zinc-800 border border-white/10 overflow-hidden">
-          <div className="h-full w-full grid place-items-center text-zinc-300 text-xs">Avatar</div>
+          <img src={RiditAvatar} alt="Ridit Jain" className="h-full w-full object-cover" />
         </div>
         <h1 className="mt-4 text-xl font-semibold tracking-wide">Ridit Jain</h1>
         <p className="text-xs text-zinc-400">Backend Engineer • AI/Cloud</p>

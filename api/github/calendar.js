@@ -9,11 +9,9 @@ export default async function handler(req, res) {
     const GH_TOKEN = process.env.GH_TOKEN;
     if (!GH_TOKEN) return res.status(500).json({ error: "GH_TOKEN not configured on server" });
 
-    // ---- clamp days (1..365)
     const n = parseInt(days, 10);
     const daysInt = Number.isFinite(n) ? Math.min(365, Math.max(1, n)) : 365;
 
-    // ---- UTC-safe inclusive window: [from..to]
     const toUtc = new Date();
     toUtc.setUTCHours(23, 59, 59, 999);
     const fromUtc = new Date(toUtc);
@@ -77,7 +75,6 @@ export default async function handler(req, res) {
     const user = json?.data?.user;
     const rl = json?.data?.rateLimit;
 
-    // Helpful warning for fine-grained tokens
     const tokenHint = (process.env.GH_TOKEN || "").startsWith("github_pat_")
       ? "If data is empty: fine-grained PATs may lack GraphQL access. Prefer a classic PAT (no scopes needed for public data)."
       : undefined;
@@ -86,7 +83,6 @@ export default async function handler(req, res) {
     const total = cal?.totalContributions ?? 0;
     const weeks = Array.isArray(cal?.weeks) ? cal.weeks : [];
 
-    // ---- Create a stable ETag based on the payload
     const payload = {
       total,
       weeks,
@@ -97,17 +93,14 @@ export default async function handler(req, res) {
     const bodyStr = JSON.stringify(payload);
     const etag = `"W/${crypto.createHash("sha1").update(bodyStr).digest("hex")}"`;
 
-    // ---- Handle If-None-Match for 304
     const inm = req.headers["if-none-match"];
     if (inm && inm === etag) {
       res.statusCode = 304;
       res.setHeader("ETag", etag);
-      // keep cache headers on 304 as well
       res.setHeader("Cache-Control", "s-maxage=600, stale-while-revalidate=3600, stale-if-error=86400");
       return res.end();
     }
 
-    // ---- CDN caching + ETag
     res.setHeader("Content-Type", "application/json");
     res.setHeader("Cache-Control", "s-maxage=600, stale-while-revalidate=3600, stale-if-error=86400");
     res.setHeader("ETag", etag);

@@ -47,7 +47,7 @@ const EXPERIENCE = [
   {
     logo: { src: bmlLogo, alt: "BML Logo", text: "B" },
     company: "BML Munjal University",
-    role: "BMU Robotics Club Treasure",
+    role: "BMU Robotics Club Treasurer",
     type: "",
     period: "Jul 2023 – Jun 2024 · 1 yr",
     location: "",

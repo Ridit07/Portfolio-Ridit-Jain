@@ -61,9 +61,8 @@ async function ghGraphQL(token, q, variables) {
   return res.json();
 }
 
-  
+
 async function fetchReadmeMD(owner, repo, token) {
-  // Same logic as readme.js, but inline to avoid extra network hop
   const gh = (url, init = {}) =>
     fetch(url, {
       ...init,
@@ -84,7 +83,6 @@ async function fetchReadmeMD(owner, repo, token) {
     return "";
   }
   if (!rr.ok) {
-    // swallow errors for robustness (don’t fail whole catalog)
     return "";
   }
   const j = await rr.json();
@@ -93,9 +91,7 @@ async function fetchReadmeMD(owner, repo, token) {
   return new TextDecoder("utf-8").decode(bin);
 }
 
-// simple in-memory memo between warm invocations
 globalThis.__CATALOG_MEMO ||= { key: "", at: 0, data: null };
-// asset version only bumps on explicit refresh
 globalThis.__ASSET_VERSION ||= String(Date.now());
 
 export default async function handler(req, res) {
@@ -162,7 +158,6 @@ export default async function handler(req, res) {
       payload.readmes = readmes;
     }
 
-    // memoize
     globalThis.__CATALOG_MEMO = { key: memoKey, at: Date.now(), data: payload };
 
     res.setHeader("Cache-Control", "s-maxage=21600, stale-while-revalidate=86400"); // 6h at edge

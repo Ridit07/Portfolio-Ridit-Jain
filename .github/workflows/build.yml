@@ -1,4 +1,5 @@
 name: Build Vite App
+
 on:
   push:
     branches: [ main ]
@@ -8,6 +9,7 @@ on:
 
 jobs:
   build:
+    name: Build Vite App  
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

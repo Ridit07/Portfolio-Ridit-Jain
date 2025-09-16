@@ -3,6 +3,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import 'dotenv/config';
+
 
 const GH_TOKEN = process.env.GH_TOKEN;
 const GH_USER = process.env.GH_USER || "Ridit07";
@@ -104,7 +106,7 @@ function mapRepo(r) {
         ...repos.slice(0, MAX_READMES).map(r => r.full_name.toLowerCase()),
       ]),
     ].slice(0, MAX_READMES);
-  
+
     async function fetchReadmeMD(owner, repo) {
       const rr = await fetch(`https://api.github.com/repos/${owner}/${repo}/readme`, {
         headers: {
@@ -126,7 +128,7 @@ function mapRepo(r) {
       const b64 = (j.content || "").replace(/\n/g, "");
       return Buffer.from(b64, "base64").toString("utf-8");
     }
-  
+
     const readmes = {};
     for (const full of preferred) {
       const [owner, repo] = full.split("/");
@@ -135,7 +137,7 @@ function mapRepo(r) {
     }
     payload.readmes = readmes;
   }
-  
+
 
   fs.writeFileSync(outFile, JSON.stringify(payload, null, 2));
   console.log(`✅ Wrote ${repos.length} repos to public/github-catalog.json`);

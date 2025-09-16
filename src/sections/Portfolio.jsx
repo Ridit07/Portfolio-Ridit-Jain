@@ -7,8 +7,8 @@ import "../styles/portfolio.css";
 const GITHUB_USER = "Ridit07";
 
 const CATEGORY_RULES = [
-  { label: "AI/ML",           match: /(ml|ai|llm|pytorch|tensorflow|cv|vision|nlp|langchain|yolo)/i },
-  { label: "Applications",    match: /(flutter|android|kotlin|ios|desktop|cli|electron)/i },
+  { label: "AI/ML", match: /(ml|ai|llm|pytorch|tensorflow|cv|vision|nlp|langchain|yolo)/i },
+  { label: "Applications", match: /(flutter|android|kotlin|ios|desktop|cli|electron)/i },
   { label: "Web development", match: /(web|react|next|node|express|django|flask|vite|go|grpc)/i },
 ];
 
@@ -22,8 +22,8 @@ function categorize({ topics = [], language = "", description = "" }) {
 
 const rawPNG = (owner, repo, v = "1") =>
   `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/portfolio.png?v=${encodeURIComponent(v)}`;
-const ogImage = (owner, repo, v = "1") =>
-  `https://opengraph.githubassets.com/portfolio-${encodeURIComponent(v)}/${owner}/${repo}`;
+const ogImage = (owner, repo) =>
+  `https://opengraph.githubassets.com/portfolio/${owner}/${repo}`;
 
 const README_CACHE = new Map();
 
@@ -109,7 +109,7 @@ async function fetchReadmeClient(owner, repo, signal) {
 /** tiny localStorage cache for the catalog (10 minutes) */
 const hasLS = () => typeof window !== "undefined" && !!window.localStorage;
 const lsGet = (k) => { try { return hasLS() ? localStorage.getItem(k) : null; } catch { return null; } };
-const lsSet = (k, v) => { try { if (hasLS()) localStorage.setItem(k, v); } catch {} };
+const lsSet = (k, v) => { try { if (hasLS()) localStorage.setItem(k, v); } catch { } };
 
 const CATALOG_CACHE_KEY = (u) => `gh_catalog_${u}`;
 const READMES_CACHE_KEY = (u) => `gh_readmes_${u}`;
@@ -126,7 +126,7 @@ function loadCatalogCache(user) {
     if (!s) return null;
     const j = JSON.parse(s);
     if (Date.now() - j.t > CATALOG_TTL_MS) {
-      try { localStorage.removeItem(CATALOG_CACHE_KEY(user)); } catch {}
+      try { localStorage.removeItem(CATALOG_CACHE_KEY(user)); } catch { }
       return null;
     }
     return j.data;
@@ -134,62 +134,9 @@ function loadCatalogCache(user) {
 }
 
 function saveCatalogCache(user, data) {
-  try { lsSet(CATALOG_CACHE_KEY(user), JSON.stringify({ t: Date.now(), data })); } catch {}
+  try { lsSet(CATALOG_CACHE_KEY(user), JSON.stringify({ t: Date.now(), data })); } catch { }
 }
 
-
-// if (typeof window !== "undefined" && import.meta?.env?.DEV) {
-//   const user = GITHUB_USER;
-
-//   window.__ghcache = {
-//     keys: {
-//       catalog: CATALOG_CACHE_KEY(user),
-//       readmes: READMES_CACHE_KEY(user),
-//       version: ASSET_VERSION_KEY(user),
-//     },
-
-//     show() {
-//       const cat = localStorage.getItem(CATALOG_CACHE_KEY(user));
-//       const rdm = localStorage.getItem(READMES_CACHE_KEY(user));
-//       const ver = localStorage.getItem(ASSET_VERSION_KEY(user));
-//       console.log({
-//         catalog: cat ? JSON.parse(cat) : null,
-//         readmes: rdm ? JSON.parse(rdm) : null,
-//         asset_version: ver || null,
-//       });
-//     },
-
-//     clear() {
-//       localStorage.removeItem(CATALOG_CACHE_KEY(user));
-//       localStorage.removeItem(READMES_CACHE_KEY(user));
-//       localStorage.removeItem(ASSET_VERSION_KEY(user));
-//       console.log("Cleared catalog/readmes/version keys.");
-//     },
-
-//     expireCatalog(msPast = CATALOG_TTL_MS + 1) {
-//       const raw = localStorage.getItem(CATALOG_CACHE_KEY(user));
-//       if (!raw) return console.warn("No catalog cache to expire.");
-//       const j = JSON.parse(raw);
-//       j.t = Date.now() - msPast;
-//       localStorage.setItem(CATALOG_CACHE_KEY(user), JSON.stringify(j));
-//       console.log("Catalog cache timestamp moved to the past. Next load should treat it as expired.");
-//     },
-
-//     expireReadmes(msPast = READMES_TTL_MS + 1) {
-//       const raw = localStorage.getItem(READMES_CACHE_KEY(user));
-//       if (!raw) return console.warn("No readmes cache to expire.");
-//       const j = JSON.parse(raw);
-//       j.t = Date.now() - msPast;
-//       localStorage.setItem(READMES_CACHE_KEY(user), JSON.stringify(j));
-//       console.log("Readmes cache timestamp moved to the past. Next README fetch should treat it as expired.");
-//     },
-
-//     shortenTTLs({ catalogMs = 5000, readmesMs = 10000 } = {}) {
-//       window.__TEST_TTLS__ = { catalogMs, readmesMs };
-//       console.warn("Short TTLs enabled (dev):", window.__TEST_TTLS__);
-//     },
-//   };
-// }
 
 
 function loadReadmesCache(user) {
@@ -205,7 +152,7 @@ function loadReadmesCache(user) {
   } catch { return null; }
 }
 function saveReadmesCache(user, mdMap, v) {
-  try { lsSet(READMES_CACHE_KEY(user), JSON.stringify({ t: Date.now(), v, md: mdMap })); } catch {}
+  try { lsSet(READMES_CACHE_KEY(user), JSON.stringify({ t: Date.now(), v, md: mdMap })); } catch { }
 }
 
 function mergeReadmesIntoCaches(user, readmes, v) {
@@ -217,7 +164,7 @@ function mergeReadmesIntoCaches(user, readmes, v) {
   const merged = { ...(cur?.md || {}), ...readmes };
   saveReadmesCache(user, merged, v);
   // remember version
-lsSet(ASSET_VERSION_KEY(user), String(v));
+  lsSet(ASSET_VERSION_KEY(user), String(v));
 }
 function getAssetVersion(user) {
   return lsGet(ASSET_VERSION_KEY(user)) || "1";
@@ -244,12 +191,12 @@ export default function Portfolio() {
 
   useEffect(() => {
     let alive = true;
-  
+
     (async () => {
       try {
         let dataLoaded = false;
         const forceRefresh = getRefreshFlag();
-  
+
         // 1) localStorage (fresh if TTL not expired)
         const cached = loadCatalogCache(GITHUB_USER);
         if (cached && alive) {
@@ -258,14 +205,14 @@ export default function Portfolio() {
           setAssetVersion(v);
           mergeReadmesIntoCaches(GITHUB_USER, cached.readmes, v);
           const prepared = prepareItems(cached.repos, v);
-          const ordered  = orderPinned(prepared, cached.pinned);
+          const ordered = orderPinned(prepared, cached.pinned);
           setItems(ordered);
           dataLoaded = true;
 
-         // backgroundVersionCheck(GITHUB_USER, setItems, setAssetVersion);
+          // backgroundVersionCheck(GITHUB_USER, setItems, setAssetVersion);
 
         }
-  
+
         // 2) static fallback (only if no LS cache)
         let staticData = null;
         if (!dataLoaded) {
@@ -276,35 +223,35 @@ export default function Portfolio() {
             setAssetVersion(v);
             mergeReadmesIntoCaches(GITHUB_USER, staticData.readmes, v);
             const prepared = prepareItems(staticData.repos, v);
-            const ordered  = orderPinned(prepared, staticData.pinned);
+            const ordered = orderPinned(prepared, staticData.pinned);
             setItems(ordered);
             dataLoaded = true;
             saveCatalogCache(GITHUB_USER, staticData);
 
 
-         //   backgroundVersionCheck(GITHUB_USER, setItems, setAssetVersion);
+            //   backgroundVersionCheck(GITHUB_USER, setItems, setAssetVersion);
 
           }
         }
-  
+
         // 3) live API — only if nothing loaded OR explicitly forced
         if (!dataLoaded || forceRefresh) {
           setErr("");
           const apiData = await fetchCatalogAPI(GITHUB_USER, { refresh: forceRefresh });
           if (!alive) return;
-  
+
           const v = apiData.asset_version || getAssetVersion(GITHUB_USER);
           setAssetVersion(v);
           mergeReadmesIntoCaches(GITHUB_USER, apiData.readmes, v);
-  
+
           const prepared = prepareItems(apiData.repos, v);
-          const ordered  = orderPinned(prepared, apiData.pinned);
+          const ordered = orderPinned(prepared, apiData.pinned);
           setItems(ordered);
-  
+
           saveCatalogCache(GITHUB_USER, apiData);
           lsSet(ASSET_VERSION_KEY(GITHUB_USER), String(v));
         }
-  
+
         // finish loading state once anything above settles
         if (alive) setLoading(false);
       } catch (e) {
@@ -313,10 +260,10 @@ export default function Portfolio() {
         setLoading(false);
       }
     })();
-  
+
     return () => { alive = false; };
   }, []);
-  
+
 
   // ---------- RENDER (this was missing) ----------
   const tabs = useMemo(() => {
@@ -358,12 +305,12 @@ export default function Portfolio() {
         {loading
           ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
           : filtered.map(repo => (
-              <ProjectCard
-                key={repo.id}
-                p={repo}
-                onOpen={() => setModal(repo)}
-              />
-            ))}
+            <ProjectCard
+              key={repo.id}
+              p={repo}
+              onOpen={() => setModal(repo)}
+            />
+          ))}
       </div>
 
       {/* Modal */}

@@ -71,8 +71,13 @@ function saveLcContestCache(user, data) {
 // }
 
 
+const proxyDataKey = (path) => `gh_proxy_cache_${path}`;
+
 async function ghViaProxy(path, etagKey) {
   const etag = lsGet(etagKey);
+  const dataKey = proxyDataKey(path);
+  const cached = lsGet(dataKey);
+
   const res = await fetch(`/api/github?path=${encodeURIComponent(path)}`, {
     headers: {
       Accept: "application/vnd.github+json",
@@ -81,7 +86,7 @@ async function ghViaProxy(path, etagKey) {
   });
 
   if (res.status === 304) {
-    // caller should keep its own cached JSON; just signal to use it
+    if (cached) return JSON.parse(cached);
     throw new Error("__USE_CACHE__");
   }
 
@@ -91,42 +96,40 @@ async function ghViaProxy(path, etagKey) {
   const newEtag = res.headers.get("etag");
   if (newEtag) lsSet(etagKey, newEtag);
 
-  return JSON.parse(text);
+  const json = JSON.parse(text);
+  lsSet(dataKey, JSON.stringify(json));
+  return json;
 }
 
-
-// async function fetchGhStats(user) {
-//   // user + repos
-//   const [u, repos] = await Promise.all([
-//     ghPublic(`https://api.github.com/users/${user}`),
-//     ghPublic(`https://api.github.com/users/${user}/repos?per_page=100&sort=updated`),
-//   ]);
-//   // events pages (best-effort)
-//   const pages = await Promise.all([
-//     ghPublic(`https://api.github.com/users/${user}/events/public?per_page=100&page=1`).catch(() => []),
-//     ghPublic(`https://api.github.com/users/${user}/events/public?per_page=100&page=2`).catch(() => []),
-//     ghPublic(`https://api.github.com/users/${user}/events/public?per_page=100&page=3`).catch(() => []),
-//   ]);
-//   return { user: u, repos, events: pages.flat() };
-// }
-
 async function fetchGhStats(user) {
-  // 1) /users
-  const u = await ghViaProxy(`/users/${user}`, `etag_user_${user}`);
+  let u, repos, events = [];
 
-  // 2) /repos
-  const repos = await ghViaProxy(`/users/${user}/repos?per_page=100&sort=updated`, `etag_repos_${user}`);
+  try {
+    u = await ghViaProxy(`/users/${user}`, `etag_user_${user}`);
+  } catch (e) {
+    if (String(e.message) === "__USE_CACHE__") {
+      u = loadGhStatsCache(user)?.user;
+    } else throw e;
+  }
 
-  // 3) /events — keep only page 1 (reduce calls)
-  let events = [];
+  try {
+    repos = await ghViaProxy(`/users/${user}/repos?per_page=100&sort=updated`, `etag_repos_${user}`);
+  } catch (e) {
+    if (String(e.message) === "__USE_CACHE__") {
+      repos = loadGhStatsCache(user)?.repos || [];
+    } else throw e;
+  }
+
   try {
     events = await ghViaProxy(`/users/${user}/events/public?per_page=100&page=1`, `etag_events_p1_${user}`);
   } catch (e) {
     if (String(e.message) !== "__USE_CACHE__") events = [];
+    else events = loadGhStatsCache(user)?.events || [];
   }
 
   return { user: u, repos, events };
 }
+
 
 
 function isGhCacheFresh(user) {
@@ -274,7 +277,10 @@ export default function Blog() {
           setErr("");
         } catch (e) {
           if (!alive) return;
-          setErr(e.message || "Failed to refresh GitHub stats.");
+          // setErr(e.message || "Failed to refresh GitHub stats.");
+          if (String(e.message) !== "__USE_CACHE__") {
+            setErr(e.message || "Failed to refresh GitHub stats.");
+          }
         }
       })();
     }

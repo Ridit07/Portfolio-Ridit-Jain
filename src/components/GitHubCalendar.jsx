@@ -1,8 +1,7 @@
 // components/GitHubCalendar.jsx
 import { useEffect, useMemo, useState } from "react";
 
-// LocalStorage with TTL (+version for future invalidation)
-const VERSION = "v2"; // bump to invalidate old cache once
+const VERSION = "v2";
 const hasLS = () => typeof window !== "undefined" && !!window.localStorage;
 const saveWithTTL = (key, value, ttlMs) => { if (!hasLS()) return; try { localStorage.setItem(key, JSON.stringify({ value, expiry: Date.now() + ttlMs })); } catch { } };
 const loadWithTTL = (key) => {
@@ -25,7 +24,8 @@ const ETAG_KEY = (login, days) => `gh_calendar_${VERSION}_${login}_${days}_etag`
 const IS_DEV = typeof import.meta !== "undefined" && import.meta.env && import.meta.env.DEV;
 const API_BASE = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : "";
 
-export default function GitHubCalendar({ login, days = 365 }) {
+export default function GitHubCalendar({ login, days = 365, data }) {
+
   const [weeks, setWeeks] = useState([]);
   const [total, setTotal] = useState(0);
   const [err, setErr] = useState("");
@@ -33,6 +33,18 @@ export default function GitHubCalendar({ login, days = 365 }) {
   const [loading, setLoad] = useState(true);
 
   useEffect(() => {
+    if (!data) return;
+    const nextWeeks = Array.isArray(data.weeks) ? data.weeks : [];
+    const nextTotal = Number.isFinite(data.total) ? data.total : 0;
+    setWeeks(nextWeeks);
+    setTotal(nextTotal);
+    setWarn(data.warning || "");
+    setErr("");
+    setLoad(false);
+  }, [data]);
+
+  useEffect(() => {
+    if (data) return;
     let alive = true;
     const controller = new AbortController();
 
@@ -42,10 +54,11 @@ export default function GitHubCalendar({ login, days = 365 }) {
     // 1) Instant paint from LS (if any)
     const cached = loadWithTTL(CK);
     if (cached && alive) {
-      setWeeks(cached.weeks || []);
+      const cw = cached.weeks || [];
+      setWeeks(cw);
       setTotal(cached.total || 0);
       setWarn(cached.warning || "");
-      setLoad(false);
+      if (cw.length > 0) setLoad(false);
     }
 
     // 2) Background refresh — honor ETag to get 304s
@@ -67,11 +80,15 @@ export default function GitHubCalendar({ login, days = 365 }) {
         });
 
         if (res.status === 304) {
-          // Nothing changed — keep current state (from LS) and exit quietly
-          if (alive) setLoad(false);
-          return;
+          const cached = loadWithTTL(CK);
+          if (cached?.weeks?.length) {
+            setWeeks(cached.weeks);
+            setTotal(cached.total || 0);
+            setWarn(cached.warning || "");
+            setLoad(false);
+            return;
+          }
         }
-
         const ct = res.headers.get("content-type") || "";
         if (!ct.includes("application/json")) {
           const preview = await res.text().catch(() => "");
@@ -170,6 +187,12 @@ export default function GitHubCalendar({ login, days = 365 }) {
         <>
           {loading && weeks.length === 0 && (
             <div className="mt-4 text-sm text-zinc-400">Loading calendar…</div>
+          )}
+
+          {!loading && weeks.length === 0 && (
+            <div className="mt-4 text-sm text-zinc-400">
+              No contribution data returned.
+            </div>
           )}
 
           {weeks.length > 0 && (

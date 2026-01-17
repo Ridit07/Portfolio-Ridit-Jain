@@ -1,8 +1,42 @@
 {
   "user": "Ridit07",
-  "fetched_at": "2025-09-16T13:55:12.352Z",
-  "asset_version": "1758030912353",
+  "fetched_at": "2026-01-18T13:37:06.806Z",
+  "asset_version": "1768743426807",
   "repos": [
+    {
+      "id": "R_kgDOJUQCkQ",
+      "name": "E-COMMERCE-PURCHASE-PREDICTION-ML",
+      "full_name": "Ridit07/E-COMMERCE-PURCHASE-PREDICTION-ML",
+      "html_url": "https://github.com/Ridit07/E-COMMERCE-PURCHASE-PREDICTION-ML",
+      "homepage": "",
+      "description": "Predict whether a customer will make a purchase on an e-commerce website using Machine Learning models, with 89% accuracy achieved via Random Forest.",
+      "language": "Jupyter Notebook",
+      "stargazers_count": 0,
+      "owner": "Ridit07",
+      "topics": [
+        "machine-learning",
+        "purchase-prediction",
+        "python",
+        "streamlit"
+      ]
+    },
+    {
+      "id": "R_kgDOMWtZWA",
+      "name": "HCL-Internship-Demo-Recruitment-Invoice-Tool",
+      "full_name": "Ridit07/HCL-Internship-Demo-Recruitment-Invoice-Tool",
+      "html_url": "https://github.com/Ridit07/HCL-Internship-Demo-Recruitment-Invoice-Tool",
+      "homepage": "",
+      "description": "AI-assisted recruitment and invoicing tool built during HCL internship, streamlining vendor claims, verification, rate-card generation, and invoice preparation with role-based workflows.",
+      "language": "Dart",
+      "stargazers_count": 1,
+      "owner": "Ridit07",
+      "topics": [
+        "flask",
+        "flutter",
+        "mysql",
+        "python"
+      ]
+    },
     {
       "id": "R_kgDOO3VOwQ",
       "name": "Portfolio-Ridit-Jain",
@@ -190,23 +224,6 @@
       ]
     },
     {
-      "id": "R_kgDOMWtZWA",
-      "name": "HCL-Internship-Demo-Recruitment-Invoice-Tool",
-      "full_name": "Ridit07/HCL-Internship-Demo-Recruitment-Invoice-Tool",
-      "html_url": "https://github.com/Ridit07/HCL-Internship-Demo-Recruitment-Invoice-Tool",
-      "homepage": "",
-      "description": "AI-assisted recruitment and invoicing tool built during HCL internship, streamlining vendor claims, verification, rate-card generation, and invoice preparation with role-based workflows.",
-      "language": "Dart",
-      "stargazers_count": 0,
-      "owner": "Ridit07",
-      "topics": [
-        "flask",
-        "flutter",
-        "mysql",
-        "python"
-      ]
-    },
-    {
       "id": "R_kgDOMWub6Q",
       "name": "Selective-Mutism-Hand-Gesture-To-Text",
       "full_name": "Ridit07/Selective-Mutism-Hand-Gesture-To-Text",
@@ -241,23 +258,6 @@
         "text-summarization",
         "toxicity-detection",
         "positive-content-generation"
-      ]
-    },
-    {
-      "id": "R_kgDOJUQCkQ",
-      "name": "E-COMMERCE-PURCHASE-PREDICTION-ML",
-      "full_name": "Ridit07/E-COMMERCE-PURCHASE-PREDICTION-ML",
-      "html_url": "https://github.com/Ridit07/E-COMMERCE-PURCHASE-PREDICTION-ML",
-      "homepage": "",
-      "description": "Predict whether a customer will make a purchase on an e-commerce website using Machine Learning models, with 89% accuracy achieved via Random Forest.",
-      "language": "Jupyter Notebook",
-      "stargazers_count": 0,
-      "owner": "Ridit07",
-      "topics": [
-        "machine-learning",
-        "purchase-prediction",
-        "python",
-        "streamlit"
       ]
     },
     {

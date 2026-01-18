@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { SectionTitle } from "../components/ui.jsx";
 import { ACCENT } from "../App.jsx";
-import fisLogo from "../assets/logos/FISLogo.svg";
 import eyLogo from "../assets/logos/EYLogo.svg";
 import zomotoLogo from "../assets/logos/ZomatoLogo.png";
 import hclLogo from "../assets/logos/HCLLogo.svg";
@@ -11,28 +10,12 @@ import userTestingLogo from "../assets/logos/UserTestingLogo.png";
 
 const EXPERIENCE = [
 
-
-  {
-    logo: { src: fisLogo, alt: "FIS logo", text: "F", fit: "contain" },
-    company: "FIS",
-    role: "Software Engineer",
-    type: "Full-time",
-    period: "September 2025 – Present",
-    location: "Noida, Uttar Pradesh, India · Hybrid",
-    bullets: [
-    ],
-
-    // skills: "REST APIs, MySQL and +11 skills",
-    // skillsList: ["Go", "REST APIs", "MySQL", "Redis", "DynamoDB", "gRPC", "AWS", "EDA", "CI/CD", "React.JS", "UAT"]
-
-  },
-
   {
     logo: { src: eyLogo, alt: "EY logo", text: "E", fit: "cover" },
     company: "EY",
     role: "Software Engineer",
     type: "Full-time",
-    period: "August 2025 – September 2025 · 2 mos",
+    period: "July 2025 – Present · 2 mos",
     location: "Gurugram, Haryana, India · Hybrid",
     bullets: [
     ],
@@ -204,8 +187,7 @@ function Card({ title, right, children }) {
         <div className="flex items-center gap-3">
           {right}
           <div className="hidden md:flex items-center gap-2 text-zinc-400">
-            <PlusIcon />
-            {/* <PencilIcon /> */}
+            <PlusIcon /><PencilIcon />
           </div>
         </div>
       </div>

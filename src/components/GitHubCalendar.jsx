@@ -245,7 +245,7 @@ export default function GitHubCalendar({ login, days = 365, data }) {
       )}
 
       <p className="mt-3 text-xs text-zinc-500">
-        Source: server-side GitHub GraphQL (token on server). Cached locally for 1h; CDN-cached in production for 10m. Uses ETag to avoid re-downloads.
+        Source: server-side GitHub GraphQL (token on server). Cached locally for 1h; CDN-cached in production for 10m.
       </p>
     </section>
   );

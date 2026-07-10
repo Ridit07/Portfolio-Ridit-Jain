@@ -5,11 +5,10 @@ import GitHubCalendar from "../components/GitHubCalendar.jsx";
 
 const GITHUB_USER = "Ridit07";
 const LEETCODE_USER = "ridit_jain19";
-const LINKEDIN_URL = "https://www.linkedin.com/in/ridit-jain-479230214/";
 
 //const GH_TOKEN = import.meta.env.VITE_GH_TOKEN || "";
 
-const GH_VER = "v1";
+const GH_VER = "v2";
 const GH_CACHE_KEY = (u) => `gh_stats_${GH_VER}_${u}`;
 const GH_TTL_MS = 6 * 60 * 60 * 1000; // 6 hour
 
@@ -102,7 +101,7 @@ async function ghViaProxy(path, etagKey) {
 }
 
 async function fetchGhStats(user) {
-  let u, repos, events = [];
+  let u, repos, events = [], prTotal = null, commitTotal = null;
 
   try {
     u = await ghViaProxy(`/users/${user}`, `etag_user_${user}`);
@@ -127,7 +126,25 @@ async function fetchGhStats(user) {
     else events = loadGhStatsCache(user)?.events || [];
   }
 
-  return { user: u, repos, events };
+  // Total pull requests authored by the user (across all of GitHub).
+  try {
+    const prSearch = await ghViaProxy(`/search/issues?q=author:${user} type:pr&per_page=1`, `etag_prs_${user}`);
+    prTotal = prSearch?.total_count ?? null;
+  } catch (e) {
+    if (String(e.message) === "__USE_CACHE__") prTotal = loadGhStatsCache(user)?.prTotal ?? null;
+    else prTotal = null;
+  }
+
+  // Total commits authored by the user (across all of GitHub).
+  try {
+    const commitSearch = await ghViaProxy(`/search/commits?q=author:${user}&per_page=1`, `etag_commits_${user}`);
+    commitTotal = commitSearch?.total_count ?? null;
+  } catch (e) {
+    if (String(e.message) === "__USE_CACHE__") commitTotal = loadGhStatsCache(user)?.commitTotal ?? null;
+    else commitTotal = null;
+  }
+
+  return { user: u, repos, events, prTotal, commitTotal };
 }
 
 
@@ -245,6 +262,8 @@ export default function Blog() {
   const [ghUser, setGhUser] = useState(null);
   const [ghRepos, setGhRepos] = useState([]);
   const [ghEvents, setGhEvents] = useState([]);
+  const [ghPrTotal, setGhPrTotal] = useState(null);
+  const [ghCommitTotal, setGhCommitTotal] = useState(null);
   const [err, setErr] = useState("");
   const [calendar, setCalendar] = useState(null);
   const [calErr, setCalErr] = useState("");
@@ -262,6 +281,8 @@ export default function Blog() {
       setGhUser(cached.user);
       setGhRepos(cached.repos || []);
       setGhEvents(cached.events || []);
+      setGhPrTotal(cached.prTotal ?? null);
+      setGhCommitTotal(cached.commitTotal ?? null);
     }
 
 
@@ -273,6 +294,8 @@ export default function Blog() {
           setGhUser(fresh.user);
           setGhRepos(fresh.repos);
           setGhEvents(fresh.events);
+          setGhPrTotal(fresh.prTotal ?? null);
+          setGhCommitTotal(fresh.commitTotal ?? null);
           saveGhStatsCache(GITHUB_USER, fresh);
           setErr("");
         } catch (e) {
@@ -365,10 +388,8 @@ export default function Blog() {
       <div className="mt-5 grid gap-3 md:grid-cols-4">
         <StatCard label="GitHub Repos" value={reposCount || "—"} />
         <StatCard label="GitHub Stars" value={stars || "—"} />
-        <StatCard label="Followers" value={ghUser?.followers ?? "—"} />
-        <a href={LINKEDIN_URL} target="_blank" rel="noreferrer" className="block">
-          <StatCard label="LinkedIn" value="View profile →" />
-        </a>
+        <StatCard label="GitHub PRs" value={ghPrTotal != null ? ghPrTotal.toLocaleString() : "—"} />
+        <StatCard label="GitHub Commits" value={ghCommitTotal != null ? ghCommitTotal.toLocaleString() : "—"} />
       </div>
 
       {calErr && (

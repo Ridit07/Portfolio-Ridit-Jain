@@ -15,15 +15,19 @@ const EXPERIENCE = [
   {
     logo: { src: fisLogo, alt: "FIS logo", text: "F", fit: "contain" },
     company: "FIS",
-    role: "Software Engineer",
+    role: "Associate Business Technical Services Analyst",
     type: "Full-time",
     period: "September 2025 – Present",
     location: "Noida, Uttar Pradesh, India · Hybrid",
     bullets: [
+      "🚀 Supporting mission-critical payment processing systems on the TSYS PRIME platform for 8+ banking clients, ensuring seamless card processing through production support, change management, and payment transaction analysis.",
+      "💳 Production Incident Resolution: Resolved 150+ production incidents across 8+ banking clients by investigating authorization failures, card declines, loan servicing issues, and statement discrepancies. Performed deep root cause analysis using SQL, application logs, code walkthroughs, and backend debugging to restore critical payment services within SLA. Impact: Reduced investigation turnaround time by 30% while minimizing business impact and improving production stability.",
+      "⚙️ Production Change Management: Executed 50+ production change requests, implementing SQL data fixes, application code changes, configuration updates, and production validations. Ensured successful deployments through post-release verification while maintaining data consistency across critical banking systems. Impact: Achieved 100% data integrity with zero critical post-release production issues.",
+      "🔍 ISO-8583 Transaction Analysis: Analyzed 500+ payment transactions using ISO-8583 message tracing to investigate authorization, clearing, and settlement issues across the payment lifecycle. Identified transaction processing gaps by tracing issuer, acquirer, and network interactions to accelerate production issue resolution. Impact: Improved issue diagnosis accuracy and enabled faster resolution of complex payment processing defects."
     ],
 
-    // skills: "REST APIs, MySQL and +11 skills",
-    // skillsList: ["Go", "REST APIs", "MySQL", "Redis", "DynamoDB", "gRPC", "AWS", "EDA", "CI/CD", "React.JS", "UAT"]
+    skills: "C, Java and +9 skills",
+    skillsList: ["C", "Java", "MySQL", "REST APIs", "AWS", "Debugging", "Splunk", "Swagger API", "ISO8583", "Payment Industry", "Client Relations"]
 
   },
 

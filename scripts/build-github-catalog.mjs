@@ -12,13 +12,26 @@ const MAX_REPOS = Number(process.env.MAX_REPOS || 100);
 const MAX_READMES = Number(process.env.MAX_READMES || 30);
 const INCLUDE_READMES = process.env.INCLUDE_READMES === "1";
 
-if (!GH_TOKEN) {
-  console.error("❌ GH_TOKEN is required for build prefetch.");
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const outFile = path.join(__dirname, "..", "public", "github-catalog.json");
+
+// If we can't refresh the catalog (missing/expired token, API error), fall back
+// to the catalog already committed at public/github-catalog.json so the build
+// still succeeds instead of hard-failing CI.
+function bailOrKeepExisting(reason) {
+  if (fs.existsSync(outFile)) {
+    console.warn(`⚠️  ${reason}`);
+    console.warn(`↩️  Keeping existing catalog at public/github-catalog.json (skipping refresh).`);
+    process.exit(0);
+  }
+  console.error(`❌ ${reason}`);
+  console.error(`   No existing public/github-catalog.json to fall back to.`);
   process.exit(1);
 }
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const outFile = path.join(__dirname, "..", "public", "github-catalog.json");
+if (!GH_TOKEN) {
+  bailOrKeepExisting("GH_TOKEN is not set — cannot refresh GitHub catalog.");
+}
 
 const query = `
   query($login:String!, $first:Int!) {
@@ -84,9 +97,14 @@ function mapRepo(r) {
 
 (async () => {
   console.log(`⏳ Fetching GitHub catalog for ${GH_USER}…`);
-  const data = await ghGraphQL(query, { login: GH_USER, first: MAX_REPOS });
+  let data;
+  try {
+    data = await ghGraphQL(query, { login: GH_USER, first: MAX_REPOS });
+  } catch (err) {
+    bailOrKeepExisting(`GitHub API request failed: ${err.message}`);
+  }
   const user = data?.data?.user;
-  if (!user) throw new Error("No user returned from GraphQL");
+  if (!user) bailOrKeepExisting("No user returned from GitHub GraphQL API.");
 
   const repos = (user.repositories?.nodes || []).map(mapRepo);
   const pinned = (user.pinnedItems?.nodes || []).map(r => mapRepo(r).full_name.toLowerCase());

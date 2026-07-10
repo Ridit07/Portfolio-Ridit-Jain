@@ -331,28 +331,20 @@ export default function Blog() {
   const weeks = useMemo(() => buildWeeks(daily, days), [daily, days]);
   const maxVal = useMemo(() => Math.max(1, ...Array.from(daily.values())), [daily]);
 
-  // Recent activity derived from public events (last ~90 days / 100 events window).
-  const recentActivity = useMemo(() => {
-    let commits = 0, prs = 0, issues = 0;
-    const contributedTo = new Set();
-    for (const e of ghEvents) {
-      switch (e.type) {
-        case "PushEvent":
-          commits += e.payload?.commits?.length || 0;
-          break;
-        case "PullRequestEvent":
-          if (e.payload?.action === "opened") prs += 1;
-          break;
-        case "IssuesEvent":
-          if (e.payload?.action === "opened") issues += 1;
-          break;
-        default:
-          break;
-      }
-      if (e.repo?.name) contributedTo.add(e.repo.name);
-    }
-    return { commits, prs, issues, contributedTo: contributedTo.size };
-  }, [ghEvents]);
+  // Full language breakdown (share %) across all public repos — used for the tech-stack card.
+  const langShare = useMemo(() => {
+    const m = new Map();
+    let total = 0;
+    ghRepos.forEach((r) => {
+      if (!r.language) return;
+      m.set(r.language, (m.get(r.language) || 0) + 1);
+      total += 1;
+    });
+    if (total === 0) return [];
+    return [...m.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([lang, count]) => ({ lang, count, pct: (count / total) * 100 }));
+  }, [ghRepos]);
 
   const topPctText = lc?.topPercentage != null ? `${Number(lc.topPercentage).toFixed(2)}%` : "—";
   const ratingText = lc?.rating ? Math.round(lc.rating).toLocaleString() : "—";
@@ -459,14 +451,9 @@ export default function Blog() {
       </div>
 
 
-      {/* GitHub stats: native card (left) + activity graph image (right) */}
+      {/* Most Used Languages (native tech-stack card) + activity graph image */}
       <div className="mt-6 grid gap-5 md:grid-cols-2">
-        <GhStatsCard
-          user={ghUser}
-          stars={stars}
-          reposCount={reposCount}
-          recent={recentActivity}
-        />
+        <GhLanguagesCard langs={langShare} />
         <GhStatImage
           label="GitHub activity graph"
           src={`https://github-readme-activity-graph.vercel.app/graph?username=${GITHUB_USER}&theme=github-dark&hide_border=true`}
@@ -477,44 +464,79 @@ export default function Blog() {
 }
 
 
-function GhStatsCard({ user, stars, reposCount, recent }) {
-  const rows = [
-    { label: "Total Stars Earned", value: stars ?? 0 },
-    { label: "Public Repos", value: user?.public_repos ?? reposCount ?? 0 },
-    { label: "Followers", value: user?.followers ?? 0 },
-    { label: "Following", value: user?.following ?? 0 },
-    { label: "Recent Commits", value: recent?.commits ?? 0 },
-    { label: "Recent PRs", value: recent?.prs ?? 0 },
-    { label: "Recent Issues", value: recent?.issues ?? 0 },
-    { label: "Repos Contributed To", value: recent?.contributedTo ?? 0 },
-  ];
+// GitHub language colors for the common ones; falls back to a palette by index.
+const LANG_COLORS = {
+  JavaScript: "#f1e05a",
+  TypeScript: "#3178c6",
+  Python: "#3572A5",
+  Java: "#b07219",
+  "C++": "#f34b7d",
+  C: "#555555",
+  "C#": "#178600",
+  HTML: "#e34c26",
+  CSS: "#563d7c",
+  Go: "#00ADD8",
+  Rust: "#dea584",
+  Ruby: "#701516",
+  PHP: "#4F5D95",
+  Shell: "#89e051",
+  Kotlin: "#A97BFF",
+  Swift: "#F05138",
+  Dart: "#00B4AB",
+  Jupyter: "#DA5B0B",
+  "Jupyter Notebook": "#DA5B0B",
+  Vue: "#41b883",
+  SCSS: "#c6538c",
+};
+const FALLBACK_PALETTE = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"];
+const langColor = (lang, i) => LANG_COLORS[lang] || FALLBACK_PALETTE[i % FALLBACK_PALETTE.length];
 
+function GhLanguagesCard({ langs }) {
   return (
     <div className="rounded-2xl bg-[#0f1115] border border-white/10 overflow-hidden">
       <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b border-white/10">
-        <h4 className="text-lg font-semibold">
-          {user?.name || `@${GITHUB_USER}`}&rsquo;s GitHub Stats
-        </h4>
+        <h4 className="text-lg font-semibold">Most Used Languages</h4>
         <a
           className="text-xs rounded-full px-3 py-1 border border-white/10 bg-white/5 hover:bg-white/10"
-          href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noreferrer"
+          href={`https://github.com/${GITHUB_USER}?tab=repositories`} target="_blank" rel="noreferrer"
         >
-          Profile
+          See repos
         </a>
       </div>
-      <div className="p-4 grid grid-cols-2 gap-x-6 gap-y-3">
-        {rows.map((r) => (
-          <div key={r.label} className="flex items-center justify-between">
-            <span className="text-sm text-zinc-400">{r.label}</span>
-            <span className="text-sm font-semibold tabular-nums">
-              {Number(r.value).toLocaleString()}
-            </span>
-          </div>
-        ))}
+      <div className="p-4">
+        {langs.length === 0 ? (
+          <p className="text-sm text-zinc-400">No language data yet.</p>
+        ) : (
+          <>
+            {/* stacked share bar */}
+            <div className="flex h-3 w-full overflow-hidden rounded-full border border-white/10">
+              {langs.map((l, i) => (
+                <div
+                  key={l.lang}
+                  title={`${l.lang} — ${l.pct.toFixed(1)}%`}
+                  style={{ width: `${l.pct}%`, background: langColor(l.lang, i) }}
+                />
+              ))}
+            </div>
+            {/* legend */}
+            <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2">
+              {langs.map((l, i) => (
+                <div key={l.lang} className="flex items-center gap-2 text-sm">
+                  <span
+                    className="inline-block h-3 w-3 rounded-full"
+                    style={{ background: langColor(l.lang, i) }}
+                  />
+                  <span className="text-zinc-200">{l.lang}</span>
+                  <span className="ml-auto text-zinc-400 tabular-nums">{l.pct.toFixed(1)}%</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+        <p className="mt-3 text-xs text-zinc-500">
+          Share of public repos by primary language.
+        </p>
       </div>
-      <p className="px-4 pb-4 text-xs text-zinc-500">
-        &ldquo;Recent&rdquo; counts come from public GitHub activity (last ~90 days).
-      </p>
     </div>
   );
 }

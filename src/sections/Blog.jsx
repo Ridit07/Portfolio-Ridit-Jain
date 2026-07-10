@@ -554,7 +554,7 @@ function GhStatImage({ label, src }) {
         href={`https://github.com/${GITHUB_USER}`}
         target="_blank"
         rel="noreferrer"
-        className="flex items-center justify-center rounded-2xl border border-white/10 bg-[#0f1115] p-6 text-sm text-zinc-400 hover:text-zinc-200"
+        className="flex h-full min-h-[220px] items-center justify-center rounded-2xl border border-white/10 bg-[#0f1115] p-6 text-sm text-zinc-400 hover:text-zinc-200"
       >
         {label} — view on GitHub ↗
       </a>
@@ -562,10 +562,10 @@ function GhStatImage({ label, src }) {
   }
 
   return (
-    <a href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noreferrer" className="block">
+    <a href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noreferrer" className="block h-full">
       <img
         loading="lazy"
-        className="w-full rounded-2xl border border-white/10"
+        className="h-full w-full rounded-2xl border border-white/10 object-cover"
         alt={label}
         src={url}
         onError={() => {

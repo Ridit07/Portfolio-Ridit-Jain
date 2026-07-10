@@ -438,27 +438,55 @@ export default function Blog() {
 
       {/* existing images row unchanged */}
       <div className="mt-6 grid gap-5 md:grid-cols-2">
-        <a href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noreferrer" className="block">
-          <img
-            loading="lazy"
-            className="w-full rounded-2xl border border-white/10"
-            alt="GitHub stats"
-            src={`https://github-readme-stats.vercel.app/api?username=${GITHUB_USER}&show_icons=true&theme=dark&hide_border=true`}
-          />
-        </a>
-        <a href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noreferrer" className="block">
-          <img
-            loading="lazy"
-            className="w-full rounded-2xl border border-white/10"
-            alt="GitHub activity graph"
-            src={`https://github-readme-activity-graph.vercel.app/graph?username=${GITHUB_USER}&theme=github-dark&hide_border=true`}
-          />
-        </a>
+        <GhStatImage
+          label="GitHub stats"
+          src={`https://github-readme-stats.vercel.app/api?username=${GITHUB_USER}&show_icons=true&theme=dark&hide_border=true`}
+        />
+        <GhStatImage
+          label="GitHub activity graph"
+          src={`https://github-readme-activity-graph.vercel.app/graph?username=${GITHUB_USER}&theme=github-dark&hide_border=true`}
+        />
       </div>
     </section>
   );
 }
 
+
+function GhStatImage({ label, src }) {
+  const MAX_RETRIES = 3;
+  const [tries, setTries] = useState(0);
+  const [failed, setFailed] = useState(false);
+
+  const url = tries === 0 ? src : `${src}&_r=${tries}`;
+
+  if (failed) {
+    return (
+      <a
+        href={`https://github.com/${GITHUB_USER}`}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-center rounded-2xl border border-white/10 bg-[#0f1115] p-6 text-sm text-zinc-400 hover:text-zinc-200"
+      >
+        {label} — view on GitHub ↗
+      </a>
+    );
+  }
+
+  return (
+    <a href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noreferrer" className="block">
+      <img
+        loading="lazy"
+        className="w-full rounded-2xl border border-white/10"
+        alt={label}
+        src={url}
+        onError={() => {
+          if (tries < MAX_RETRIES) setTries((t) => t + 1);
+          else setFailed(true);
+        }}
+      />
+    </a>
+  );
+}
 
 function StatCard({ label, value }) {
   return (

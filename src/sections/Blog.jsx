@@ -331,6 +331,29 @@ export default function Blog() {
   const weeks = useMemo(() => buildWeeks(daily, days), [daily, days]);
   const maxVal = useMemo(() => Math.max(1, ...Array.from(daily.values())), [daily]);
 
+  // Recent activity derived from public events (last ~90 days / 100 events window).
+  const recentActivity = useMemo(() => {
+    let commits = 0, prs = 0, issues = 0;
+    const contributedTo = new Set();
+    for (const e of ghEvents) {
+      switch (e.type) {
+        case "PushEvent":
+          commits += e.payload?.commits?.length || 0;
+          break;
+        case "PullRequestEvent":
+          if (e.payload?.action === "opened") prs += 1;
+          break;
+        case "IssuesEvent":
+          if (e.payload?.action === "opened") issues += 1;
+          break;
+        default:
+          break;
+      }
+      if (e.repo?.name) contributedTo.add(e.repo.name);
+    }
+    return { commits, prs, issues, contributedTo: contributedTo.size };
+  }, [ghEvents]);
+
   const topPctText = lc?.topPercentage != null ? `${Number(lc.topPercentage).toFixed(2)}%` : "—";
   const ratingText = lc?.rating ? Math.round(lc.rating).toLocaleString() : "—";
   const rankText = lc?.ranking != null ? Number(lc.ranking).toLocaleString() : "—";
@@ -436,11 +459,13 @@ export default function Blog() {
       </div>
 
 
-      {/* existing images row unchanged */}
+      {/* GitHub stats: native card (left) + activity graph image (right) */}
       <div className="mt-6 grid gap-5 md:grid-cols-2">
-        <GhStatImage
-          label="GitHub stats"
-          src={`https://github-readme-stats.vercel.app/api?username=${GITHUB_USER}&show_icons=true&theme=dark&hide_border=true`}
+        <GhStatsCard
+          user={ghUser}
+          stars={stars}
+          reposCount={reposCount}
+          recent={recentActivity}
         />
         <GhStatImage
           label="GitHub activity graph"
@@ -451,6 +476,48 @@ export default function Blog() {
   );
 }
 
+
+function GhStatsCard({ user, stars, reposCount, recent }) {
+  const rows = [
+    { label: "Total Stars Earned", value: stars ?? 0 },
+    { label: "Public Repos", value: user?.public_repos ?? reposCount ?? 0 },
+    { label: "Followers", value: user?.followers ?? 0 },
+    { label: "Following", value: user?.following ?? 0 },
+    { label: "Recent Commits", value: recent?.commits ?? 0 },
+    { label: "Recent PRs", value: recent?.prs ?? 0 },
+    { label: "Recent Issues", value: recent?.issues ?? 0 },
+    { label: "Repos Contributed To", value: recent?.contributedTo ?? 0 },
+  ];
+
+  return (
+    <div className="rounded-2xl bg-[#0f1115] border border-white/10 overflow-hidden">
+      <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b border-white/10">
+        <h4 className="text-lg font-semibold">
+          {user?.name || `@${GITHUB_USER}`}&rsquo;s GitHub Stats
+        </h4>
+        <a
+          className="text-xs rounded-full px-3 py-1 border border-white/10 bg-white/5 hover:bg-white/10"
+          href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noreferrer"
+        >
+          Profile
+        </a>
+      </div>
+      <div className="p-4 grid grid-cols-2 gap-x-6 gap-y-3">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-center justify-between">
+            <span className="text-sm text-zinc-400">{r.label}</span>
+            <span className="text-sm font-semibold tabular-nums">
+              {Number(r.value).toLocaleString()}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="px-4 pb-4 text-xs text-zinc-500">
+        &ldquo;Recent&rdquo; counts come from public GitHub activity (last ~90 days).
+      </p>
+    </div>
+  );
+}
 
 function GhStatImage({ label, src }) {
   const MAX_RETRIES = 3;

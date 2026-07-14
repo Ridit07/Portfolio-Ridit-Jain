@@ -8,7 +8,7 @@ const LEETCODE_USER = "ridit_jain19";
 
 //const GH_TOKEN = import.meta.env.VITE_GH_TOKEN || "";
 
-const GH_VER = "v2";
+const GH_VER = "v3";
 const GH_CACHE_KEY = (u) => `gh_stats_${GH_VER}_${u}`;
 const GH_TTL_MS = 6 * 60 * 60 * 1000; // 6 hour
 
@@ -126,18 +126,18 @@ async function fetchGhStats(user) {
     else events = loadGhStatsCache(user)?.events || [];
   }
 
-  // Total pull requests authored by the user (across all of GitHub).
+  const yearStart = `${new Date().getFullYear()}-01-01`;
+
   try {
-    const prSearch = await ghViaProxy(`/search/issues?q=author:${user} type:pr&per_page=1`, `etag_prs_${user}`);
+    const prSearch = await ghViaProxy(`/search/issues?q=author:${user} type:pr created:>=${yearStart}&per_page=1`, `etag_prs_${user}`);
     prTotal = prSearch?.total_count ?? null;
   } catch (e) {
     if (String(e.message) === "__USE_CACHE__") prTotal = loadGhStatsCache(user)?.prTotal ?? null;
     else prTotal = null;
   }
 
-  // Total commits authored by the user (across all of GitHub).
   try {
-    const commitSearch = await ghViaProxy(`/search/commits?q=author:${user}&per_page=1`, `etag_commits_${user}`);
+    const commitSearch = await ghViaProxy(`/search/commits?q=author:${user} author-date:>=${yearStart}&per_page=1`, `etag_commits_${user}`);
     commitTotal = commitSearch?.total_count ?? null;
   } catch (e) {
     if (String(e.message) === "__USE_CACHE__") commitTotal = loadGhStatsCache(user)?.commitTotal ?? null;
@@ -388,8 +388,8 @@ export default function Blog() {
       <div className="mt-5 grid gap-3 md:grid-cols-4">
         <StatCard label="GitHub Repos" value={reposCount || "—"} />
         <StatCard label="GitHub Stars" value={stars || "—"} />
-        <StatCard label="GitHub PRs" value={ghPrTotal != null ? ghPrTotal.toLocaleString() : "—"} />
-        <StatCard label="GitHub Commits" value={ghCommitTotal != null ? ghCommitTotal.toLocaleString() : "—"} />
+        <StatCard label={`GitHub PRs (${new Date().getFullYear()})`} value={ghPrTotal != null ? ghPrTotal.toLocaleString() : "—"} />
+        <StatCard label={`GitHub Commits (${new Date().getFullYear()})`} value={ghCommitTotal != null ? ghCommitTotal.toLocaleString() : "—"} />
       </div>
 
       {calErr && (
